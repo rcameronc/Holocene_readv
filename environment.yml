@@ -5,12 +5,16 @@ channels:
 dependencies:
   - numpy
   - pandas
-  - xarray
+  - xarray=0.14.0
   - scipy
   - matplotlib
   - cartopy
   - python=3.6
   - pip
+  - netcdf4
+  - dask
+  - jupyter
+  - jupyterlab
   - pip:
     - tensorflow==2.1.0
     - git+https://github.com/GPflow/GPflow.git@develop#egg=gpflow

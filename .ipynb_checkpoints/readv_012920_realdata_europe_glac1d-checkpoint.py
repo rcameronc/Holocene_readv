@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 import scipy.io as io
+import random
 from itertools import product
 import glob
 import time
@@ -22,7 +23,7 @@ from matplotlib.lines import Line2D
 
 #gpflow
 import gpflow as gpf
-from gpflow.utilities import print_summary, set_trainable
+from gpflow.utilities import print_summary, set_trainable, ops
 from gpflow.logdensities import multivariate_normal
 from gpflow.kernels import Kernel
 from gpflow.mean_functions import MeanFunction
@@ -47,6 +48,9 @@ class MidpointNormalize(Normalize):
 
 
 ####################  Initialize parameters #######################
+#|																 |#
+#|																 |#
+#|																 |#
 #################### ---------------------- #######################
 
 ice_model = 'd6g_h6g_'  #'glac1d_'
@@ -69,8 +73,7 @@ tmax, tmin, tstep = 7050, 4450, 100
 ages_lgm = np.arange(100, 26000, tstep)[::-1]
 
 #import khan dataset
-# path = '/Users/rogercreel/Dropbox/Columbia_PhD/Research/Holocene/Khan_SL_data/GSL_LGM_120519_.csv'
-path = 'GSL_LGM_120519_.csv'
+path = '/Users/rogercreel/Dropbox/Columbia_PhD/Research/Holocene/Khan_SL_data/GSL_LGM_120519_.csv'
 
 df = pd.read_csv(path, encoding="ISO-8859-15", engine='python')
 df = df.replace('\s+', '_', regex=True).replace('-', '_', regex=True).\
@@ -95,6 +98,9 @@ df_place = dfind[(dfind.age > tmin) & (dfind.age < tmax) &
 df_place.shape
 
 ####################  	Plot locations  	#######################
+#|																 |#
+#|																 |#
+#|																 |#
 #################### ---------------------- #######################
 
 #get counts by location rounded to nearest 0.1 degree
@@ -143,13 +149,14 @@ leg = plt.legend([size],
 leg.get_frame().set_edgecolor('k')
 ax.set_title('')
 
-####################  Make 3D fingerprint  #######################
+####################  Make 3D fingerprint 	#######################
+#|																 |#
+#|																 |#
+#|																 |#
 #################### ---------------------- #######################
 
-# path = '/Users/rogercreel/Dropbox/Columbia_PhD/Research/Holocene/WAIS_readvance/notebooks/'
-path = ''
+path = '/Users/rogercreel/Dropbox/Columbia_PhD/Research/Holocene/WAIS_readvance/notebooks/'
 filename = 'WAISreadvance_VM5_6ka_1step.mat'
-
 waismask = io.loadmat(path + filename, squeeze_me=True)
 ds_mask = xr.Dataset({'rsl': (['lat', 'lon', 'age'], waismask['RSL'])},
                      coords={
@@ -224,6 +231,9 @@ ds_readvprior = make_fingerprint(start, end, maxscale)
 ds_readvprior_std = ds_readvprior * 0.3
 
 ####################  Build  GIA models 	#######################
+#|																 |#
+#|																 |#
+#|																 |#
 #################### ---------------------- #######################
 
 #Use either glac1d or ICE6G
@@ -232,8 +242,7 @@ if ice_model == 'glac1d_':
     def build_dataset(model):
         """download model runs from local directory."""
 
-        # path = f'/Users/rogercreel/Dropbox/Columbia_PhD/Research/Holocene/WAIS_readvance/Cluster/output_ice/readv_out/glac1d/output_{model}'
-        path = f'data/{model}'
+        path = f'/Users/rogercreel/Dropbox/Columbia_PhD/Research/Holocene/WAIS_readvance/Cluster/output_ice/readv_out/glac1d/output_{model}'
         files = f'{path}*.nc'
         basefiles = glob.glob(files)
         modelrun = [
@@ -305,8 +314,7 @@ else:
     def build_dataset(model):
         """download model runs from local directory."""
 
-        # path = f'/Users/rogercreel/Dropbox/Columbia_PhD/Research/Holocene/WAIS_readvance/Cluster/output_ice/readv_out/output_readv/output_{model}'
-        path = f'data/{model}'
+        path = f'/Users/rogercreel/Dropbox/Columbia_PhD/Research/Holocene/WAIS_readvance/Cluster/output_ice/readv_out/output_readv/output_{model}'
         files = f'{path}*.nc'
         basefiles = glob.glob(files)
         modelrun = [
@@ -401,6 +409,9 @@ for i, row in df_place.iterrows():
 df_place.shape
 
 ##################	  RUN GP REGRESSION 	#######################
+#|																 |#
+#|																 |#
+#|																 |#
 ##################  --------------------	 ######################
 
 start = time.time()
@@ -509,11 +520,11 @@ class HaversineKernel_Matern52(gpf.kernels.Matern52):
                  lengthscale=1.0,
                  variance=1.0,
                  active_dims=None,
-                 ):
+                 ard=None):
         super().__init__(active_dims=active_dims,
                          variance=variance,
                          lengthscale=lengthscale,
-                        )
+                         ard=ard)
 
     def haversine_dist(self, X, X2):
         pi = np.pi / 180
@@ -546,11 +557,11 @@ class HaversineKernel_Matern32(gpf.kernels.Matern32):
                  lengthscale=1.0,
                  variance=1.0,
                  active_dims=None,
-                 ):
+                 ard=None):
         super().__init__(active_dims=active_dims,
                          variance=variance,
                          lengthscale=lengthscale,
-                         )
+                         ard=ard)
 
     def haversine_dist(self, X, X2):
         pi = np.pi / 180
@@ -646,6 +657,9 @@ print('negative log marginal likelihood =',
       m.neg_log_marginal_likelihood().numpy())
 
 ##################	  INTERPOLATE MODELS 	#######################
+#|																 |#
+#|																 |#
+#|																 |#
 ##################  --------------------	 ######################
 
 # turn GPR output into xarray dataarray
@@ -678,10 +692,12 @@ da_readvpriorinterpstd = interp_likegpr(ds_readvprior_std)
 da_priorplusgpr = da_zp + da_giapriorinterp
 
 ##################	  	 SAVE NETCDFS 	 	#######################
+#|																 |#
+#|																 |#
+#|																 |#
 ##################  --------------------	 ######################
 
-# path = f'/Users/rogercreel/Dropbox/Columbia_PhD/Research/Holocene/WAIS_readvance/scripts/netcdfs/'
-path = 'output/'
+path = f'/Users/rogercreel/Dropbox/Columbia_PhD/Research/Holocene/WAIS_readvance/scripts/netcdfs/'
 da_zp.to_netcdf(path + ice_model + lith_thickness + '_' + place + '_da_zp')
 da_giapriorinterp.to_netcdf(path + ice_model + lith_thickness + '_' + place +
                             '_giaprior')
@@ -691,10 +707,13 @@ da_varp.to_netcdf(path + ice_model + lith_thickness + '_' + place +
                   '_gp_variance')
 
 ##################		  PLOT  MODELS 		#######################
+#|																 |#
+#|																 |#
+#|																 |#
 ##################  --------------------	 ######################
 
-#dirName = f'/Users/rogercreel/Dropbox/Columbia_PhD/Research/Holocene/WAIS_readvance/scripts/figs/{place}/'
-dirName = f'figs/{place}/'
+dirName = f'/Users/rogercreel/Dropbox/Columbia_PhD/Research/Holocene/WAIS_readvance/scripts/figs/{place}/'
+
 if not os.path.exists(dirName):
     os.mkdir(dirName)
     print("Directory ", dirName, " Created ")
@@ -835,6 +854,9 @@ for i, age in enumerate(ages):
 fig.savefig(dirName + f'{ages[i]}_{place}_realdata_fig_3D', transparent=True)
 
 ##################	CHOOSE LOCS W/NUF SAMPS #######################
+#|																 |#
+#|																 |#
+#|																 |#
 ##################  --------------------	 ######################
 
 
@@ -860,6 +882,9 @@ df_nufsamps = locs_with_enoughsamples(df_place, place, number)
 len(df_nufsamps.locnum.unique())
 
 ##################	PLOT LOCS W/NUF SAMPS   #######################
+#|																 |#
+#|																 |#
+#|																 |#
 ##################  --------------------	 ######################
 
 
@@ -955,6 +980,9 @@ fig.savefig(dirName + f'{ages[0]}to{ages[-1]}_{place}_realdata_fig_1Dlocs',
             transparent=True)
 
 #################   DECOMPOSE GPR INTO KERNELS ####################
+#|																 |#
+#|																 |#
+#|																 |#
 ##################  --------------------	 ######################
 
 
@@ -1031,7 +1059,13 @@ da_var4 = make_dataarray(var4)
 da_A5 = make_dataarray(A5)
 da_var5 = make_dataarray(var5)
 
+# da_A6 = make_dataarray(A6)
+# da_var6 = make_dataarray(var6)
+
 #################   PLOT DECOMPOSED KERNELS    ####################
+#|																 |#
+#|																 |#
+#|																 |#
 ##################  --------------------	   ####################
 
 fig, ax = plt.subplots(1, 6, figsize=(24, 4))
