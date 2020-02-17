@@ -70,7 +70,7 @@ ages_lgm = np.arange(100, 26000, tstep)[::-1]
 
 #import khan dataset
 # path = '/Users/rogercreel/Dropbox/Columbia_PhD/Research/Holocene/Khan_SL_data/GSL_LGM_120519_.csv'
-path = 'GSL_LGM_120519_.csv'
+path = 'data/GSL_LGM_120519_.csv'
 
 df = pd.read_csv(path, encoding="ISO-8859-15", engine='python')
 df = df.replace('\s+', '_', regex=True).replace('-', '_', regex=True).\
@@ -148,7 +148,7 @@ ax.set_title('')
 
 # path = '/Users/rogercreel/Dropbox/Columbia_PhD/Research/Holocene/WAIS_readvance/notebooks/'
 path = ''
-filename = 'WAISreadvance_VM5_6ka_1step.mat'
+filename = 'data/WAISreadvance_VM5_6ka_1step.mat'
 
 waismask = io.loadmat(path + filename, squeeze_me=True)
 ds_mask = xr.Dataset({'rsl': (['lat', 'lon', 'age'], waismask['RSL'])},
@@ -233,7 +233,7 @@ if ice_model == 'glac1d_':
         """download model runs from local directory."""
 
         # path = f'/Users/rogercreel/Dropbox/Columbia_PhD/Research/Holocene/WAIS_readvance/Cluster/output_ice/readv_out/glac1d/output_{model}'
-        path = f'data/{model}'
+        path = f'data/glac1d_/output_{model}'
         files = f'{path}*.nc'
         basefiles = glob.glob(files)
         modelrun = [
@@ -306,11 +306,11 @@ else:
         """download model runs from local directory."""
 
         # path = f'/Users/rogercreel/Dropbox/Columbia_PhD/Research/Holocene/WAIS_readvance/Cluster/output_ice/readv_out/output_readv/output_{model}'
-        path = f'data/{model}'
+        path = f'data/d6g_h6g_/output_{model}'
         files = f'{path}*.nc'
         basefiles = glob.glob(files)
         modelrun = [
-            key.split('readv/output_', 1)[1][:-3].replace('.', '_')
+            key.split('d6g_h6g_/output_', 1)[1][:-3].replace('.', '_')
             for key in basefiles
         ]
         dss = xr.open_mfdataset(files,
@@ -505,15 +505,17 @@ class HaversineKernel_Matern52(gpf.kernels.Matern52):
     Isotropic Matern52 Kernel with Haversine distance instead of euclidean distance.
     Assumes n dimensional data, with columns [latitude, longitude] in degrees.
     """
-    def __init__(self,
-                 lengthscale=1.0,
-                 variance=1.0,
-                 active_dims=None,
-                 ):
-        super().__init__(active_dims=active_dims,
-                         variance=variance,
-                         lengthscale=lengthscale,
-                        )
+    def __init__(
+        self,
+        lengthscale=1.0,
+        variance=1.0,
+        active_dims=None,
+    ):
+        super().__init__(
+            active_dims=active_dims,
+            variance=variance,
+            lengthscale=lengthscale,
+        )
 
     def haversine_dist(self, X, X2):
         pi = np.pi / 180
@@ -542,15 +544,17 @@ class HaversineKernel_Matern32(gpf.kernels.Matern32):
     Isotropic Matern52 Kernel with Haversine distance instead of euclidean distance.
     Assumes n dimensional data, with columns [latitude, longitude] in degrees.
     """
-    def __init__(self,
-                 lengthscale=1.0,
-                 variance=1.0,
-                 active_dims=None,
-                 ):
-        super().__init__(active_dims=active_dims,
-                         variance=variance,
-                         lengthscale=lengthscale,
-                         )
+    def __init__(
+        self,
+        lengthscale=1.0,
+        variance=1.0,
+        active_dims=None,
+    ):
+        super().__init__(
+            active_dims=active_dims,
+            variance=variance,
+            lengthscale=lengthscale,
+        )
 
     def haversine_dist(self, X, X2):
         pi = np.pi / 180
@@ -918,7 +922,8 @@ for i, site in enumerate(df_nufsamps.groupby('locnum')):
 
     ax[i].legend(loc='lower left')
 
-path = f'/Users/rogercreel/Dropbox/Columbia_PhD/Research/Holocene/WAIS_readvance/scripts/figs/{place}/'
+#path = f'/Users/rogercreel/Dropbox/Columbia_PhD/Research/Holocene/WAIS_readvance/scripts/figs/{place}/'
+path = 'figs/{place}'
 fig.savefig(dirName + f'{ages[0]}to{ages[-1]}_{place}_realdata_fig_1D',
             transparent=True)
 
@@ -1048,7 +1053,7 @@ da_A5[:, 0, 0].plot(ax=ax[4])
 
 # da_A6[:,0,0].plot(ax=ax[5])
 
-plt.tight_layout()
+# plt.tight_layout()
 
 fig.savefig(dirName + f'{ages[0]}to{ages[-1]}_{place}_decompkernels',
             transparent=True)
