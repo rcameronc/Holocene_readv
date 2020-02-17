@@ -3,10 +3,16 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-  - numpy 
+  - numpy
+  - pandas
+  - xarray
+  - scipy
+  - matplotlib
+  - cartopy
   - python=3.6
-  - pip 
+  - pip
   - pip:
+    - tensorflow==2.1.0
     - git+https://github.com/GPflow/GPflow.git@develop#egg=gpflow
 
 
