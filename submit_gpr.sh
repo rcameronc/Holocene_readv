@@ -3,17 +3,17 @@
 ## adjust for your love numbers
 
 # Ice model
-for name in glac1d_ d6g_h6g_
+for name in glac1d_ # d6g_h6g_
 do
 
 #Earth model
-for lith in l71C l96C
+for lith in l71C # l96C
 do
 
-for lm in 3 5 7 8 9 10 15 20 30 40 50
+for lm in 3 5 # 7 8 9 10 15 20 30 40 50
 do
 
-for um in p2 p3 p4 p5
+for um in p2 # p3 p4 p5
 do
 
 for tmax in 5010
@@ -23,10 +23,10 @@ for tmin in 3990
 do
 
 # put together file name
-fileName="execute_${name}_${lith}_${um}_${lm}_${tmax}_${tmin}"
-fileName_run="run_${name}_${lith}_${um}_${lm}_${tmax}_${tmin}.m"
-fileName_out="out_${name}_${lith}_${um}_${lm}_${tmax}_${tmin}.out"
-run_name="${name}_${lith}_${um}_${lm}_${tmax}_${tmin}";
+fileName="execute_${name}${lith}_${um}_${lm}_${tmax}_${tmin}"
+fileName_run="run_${name}${lith}_${um}_${lm}_${tmax}_${tmin}"
+fileName_out="out_${name}${lith}_${um}_${lm}_${tmax}_${tmin}.out"
+run_name="${name}_${lith}${um}_${lm}_${tmax}_${tmin}";
 
 # go to run folder
 
@@ -45,7 +45,7 @@ exec 4<> $fileName_run
     echo "cd .." >&4
     ## change this to "SL_equation_viscoelastic_ ...()"
     # echo "SL_equation_viscoelastic_${name}('l${lith}.um${um}.lm${lm}')" >&4
-    echo "readv_it.py --mod $name --lith $lith --um $um --lm $lm --tmax $tmax --tmin $tmin" >&4
+    echo "python readv_it.py --mod $name --lith $lith --um $um --lm $lm --tmax $tmax --tmin $tmin" >&4
     echo "exit" >&4
 
 # Close fd 4
@@ -71,9 +71,10 @@ cd ../execute_glac1d
     echo "#SBATCH --mail-type=ALL"  >&3  # specify what kind of emails you want to get
     echo "#SBATCH --mail-user=rcreel@ldeo.columbia.edu" >&3  # specify email address"
     echo " " >&3
-    #echo "matlab -nojvm -nodisplay -nosplash < ../run_readv/${fileName_run} " >&3
-    echo "conda activate gpflow6_0" >&3
-    echo "python -m memory_profiler "../run_gpr/${fileName_run}" " >&3
+    #echo "matlab -nojvm -nodisplay -nosplash  ../run_readv/${fileName_run} " >&3
+    echo "module load anaconda"
+    echo "conda activate gpflow6_0"
+    echo "../run_gpr/${fileName_run}" " >&3
     # Close fd 3
     exec 3>&-
 
