@@ -22,7 +22,7 @@ from matplotlib.colors import Normalize
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
 from matplotlib.lines import Line2D
-import seaborn as sns
+# import seaborn as sns
 
 # gpflow
 import gpflow as gpf
