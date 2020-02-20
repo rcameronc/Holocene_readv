@@ -44,7 +44,7 @@ exec 4<> $fileName_run
     echo "cd .." >&4
     ## change this to "SL_equation_viscoelastic_ ...()"
     # echo "SL_equation_viscoelastic_${name}('l${lith}.um${um}.lm${lm}')" >&4
-    echo "python readv_it.py --mod $name --lith $lith --um $um --lm $lm --tmax $tmax --tmin $tmin" >&4
+    echo "python -m memory_profiler readv_it.py --mod $name --lith $lith --um $um --lm $lm --tmax $tmax --tmin $tmin" >&4
     echo "exit" >&4
 
 # Close fd 4
