@@ -62,12 +62,16 @@ def readv():
     parser.add_argument("--lith", default='l71C')
     parser.add_argument("--um", default="p2")
     parser.add_argument("--lm", default="3")
+    parser.add_argument("--tmax", default="4010")
+    parser.add_argument("--tmin", default="2990")
 
     args = parser.parse_args()
     ice_models = [args.mod]
     lith_thicknesses = [args.lith]
     um = args.um
     lm = args.lm
+    tmax = args.tmax
+    tmin = args.tmin
 
     #ice_models = ['d6g_h6g_']# , 'glac1d_']
     #lith_thicknesses = ['l96C']# , 'l71C']
@@ -93,7 +97,7 @@ def readv():
                 'fennoscandia': [-15, 50, 45, 73],
             }
             extent = locs[place]
-            tmax, tmin, tstep = 4010, 3490, 100
+            tmax, tmin, tstep = tmax, tmin, 100
 
             ages_lgm = np.arange(100, 26000, tstep)[::-1]
 

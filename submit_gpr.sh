@@ -3,14 +3,14 @@
 ## adjust for your love numbers
 
 # Ice model
-for name in glac1d d6g_h6g_
+for name in glac1d_ d6g_h6g_
 do
 
 #Earth model
-for lm in 3 5 7 8 9 10 15 20 30 40 50
+for lith in l71C l96C
 do
 
-for lith in 71C 96C
+for lm in 3 5 7 8 9 10 15 20 30 40 50
 do
 
 for um in p2 p3 p4 p5
@@ -40,7 +40,7 @@ exec 4<> $fileName_run
     echo "cd .." >&4
     ## change this to "SL_equation_viscoelastic_ ...()"
     # echo "SL_equation_viscoelastic_${name}('l${lith}.um${um}.lm${lm}')" >&4
-    echo "readv_022020_it.py --mod $name --lith $lith --um $um -- lm $lm" >&4
+    echo "readv_it.py --mod $name --lith $lith --um $um -- lm $lm" >&4
     echo "exit" >&4
 
 # Close fd 4
@@ -68,7 +68,7 @@ cd ../execute_glac1d
     echo " " >&3
     #echo "matlab -nojvm -nodisplay -nosplash < ../run_readv/${fileName_run} " >&3
     echo "conda activate gpflow6_0" >&3
-    echo "python "../run_gpr/${fileName_run}" " >&3
+    echo "python -m memory_profiler "../run_gpr/${fileName_run}" " >&3
     # Close fd 3
     exec 3>&-
 
