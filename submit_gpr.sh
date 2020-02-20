@@ -45,7 +45,7 @@ exec 4<> $fileName_run
     echo "cd .." >&4
     ## change this to "SL_equation_viscoelastic_ ...()"
     # echo "SL_equation_viscoelastic_${name}('l${lith}.um${um}.lm${lm}')" >&4
-    echo "python readv_it.py --mod $name --lith $lith --um $um --lm $lm --tmax $tmax --tmin $tmin" >&4
+    echo "readv_it.py --mod $name --lith $lith --um $um --lm $lm --tmax $tmax --tmin $tmin" >&4
     echo "exit" >&4
 
 # Close fd 4
@@ -55,7 +55,7 @@ exec 4>&-
 ## create this folder in the same directory as this file
 # go to execute folder
 rm -r execute_gpr
-mkdir ../execute_gpr
+mkdir execute_gpr
 cd execute_gpr
 # rm $fileName
 # write a submit script that passes parameters on to execute script
@@ -76,7 +76,7 @@ cd execute_gpr
     #echo "matlab -nojvm -nodisplay -nosplash  ../run_readv/${fileName_run} " >&3
     echo "module load anaconda" >&3
     echo "source activate gpflow6_0" >&3
-    echo "../run_gpr/${fileName_run}" >&3
+    echo "python ../run_gpr/${fileName_run}" >&3
     # Close fd 3
     exec 3>&-
 
