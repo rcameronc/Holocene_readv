@@ -22,7 +22,7 @@ from matplotlib.colors import Normalize
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
 from matplotlib.lines import Line2D
-import seaborn as sns
+# import seaborn as sns
 
 # gpflow
 import gpflow as gpf
@@ -55,9 +55,9 @@ def readv():
 
     ####################  Initialize parameters #######################
     #################### ---------------------- #######################
-    
-    ice_models = ['d6g_h6g_', 'glac1d_']
-    lith_thicknesses = ['l96C', 'l71C']
+
+    ice_models = ['d6g_h6g_']# , 'glac1d_']
+    lith_thicknesses = ['l96C']# , 'l71C']
 
     for i, ice_model in enumerate(ice_models):
         for k, lith_thickness in enumerate(lith_thicknesses):
@@ -80,7 +80,7 @@ def readv():
                 'fennoscandia': [-15, 50, 45, 73],
             }
             extent = locs[place]
-            tmax, tmin, tstep = 5550, 4950, 100
+            tmax, tmin, tstep = 4010, 3490, 100
 
             ages_lgm = np.arange(100, 26000, tstep)[::-1]
 
@@ -319,7 +319,7 @@ def readv():
                 print(f'{modelrun} run number {i}')
 
                 if ice_model == 'glac1d_':
-                    # make prior RSL 
+                    # make prior RSL
                     ds_area = one_mod(path,
                         [ice_model + lith_thickness]).sel(modelrun=modelrun).rsl.sel(
                             age=slice(tmax, tmin),
@@ -549,7 +549,7 @@ def readv():
     #                 k1.variance = bounded_parameter(0.1, 100, 2)
 
                     k1 = gpf.kernels.Matern32(active_dims=[0, 1])
-                    k1.lengthscale = bounded_parameter(50, 500, 20)  #hemispheric space
+                    k1.lengthscale = bounded_parameter(50, 500, 60)  #hemispheric space
                     k1.variance = bounded_parameter(0.05, 100, 2)
 
     #                 k2 = HaversineKernel_Matern32(active_dims=[0, 1])
@@ -1015,13 +1015,13 @@ def readv():
                     pass
 
             #store log likelihood in dataframe
-            df_out = pd.DataFrame({'modelrun': modrunlist, 
+                df_out = pd.DataFrame({'modelrun': modrunlist,
                                  'log_marginal_likelihood': loglikelist})
 
 
-            writepath = f'output/{path_gen}_loglikelihood'
-            df_out.to_csv(writepath, index=False)
-            df_likes = pd.read_csv(writepath)
+                writepath = f'output/{path_gen}_loglikelihood'
+                df_out.to_csv(writepath, index=False)
+                df_likes = pd.read_csv(writepath)
 
             # make heatmap for upper vs. lower mantle viscosities at one lithosphere thickness
 
@@ -1046,7 +1046,7 @@ def readv():
             sns.heatmap(heatmap,  cmap='coolwarm', ax=ax,  cbar_kws={'label': 'negative log likelihood'})
             ax.set_title(f'{place} {ages[0]} - {ages[-1]} yrs \n {ice_model} : {df_likes.lith[0]} km lithosphere'); # (havsine)
 
-            fig.savefig(dirName + f'{path_gen}_likelihood_heatmap', transparent=True)   # _havsine 
+            fig.savefig(dirName + f'{path_gen}_likelihood_heatmap', transparent=True)   # _havsine
 
 if __name__ == '__main__':
     readv()
