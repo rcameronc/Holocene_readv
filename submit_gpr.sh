@@ -16,12 +16,17 @@ do
 for um in p2 p3 p4 p5
 do
 
+for tmax in 5010
+do
+
+for tmin in 3990
+do
 
 # put together file name
-fileName="execute_${name}_${lith}_${um}_${lm}"
-fileName_run="run_${name}_${lith}_${um}_${lm}.m"
-fileName_out="out_${name}_${lith}_${um}_${lm}.out"
-run_name="${name}_${lith}_${um}_${lm}";
+fileName="execute_${name}_${lith}_${um}_${lm}_${tmax}_${tmin}"
+fileName_run="run_${name}_${lith}_${um}_${lm}_${tmax}_${tmin}.m"
+fileName_out="out_${name}_${lith}_${um}_${lm}_${tmax}_${tmin}.out"
+run_name="${name}_${lith}_${um}_${lm}_${tmax}_${tmin}";
 
 # go to run folder
 
@@ -40,7 +45,7 @@ exec 4<> $fileName_run
     echo "cd .." >&4
     ## change this to "SL_equation_viscoelastic_ ...()"
     # echo "SL_equation_viscoelastic_${name}('l${lith}.um${um}.lm${lm}')" >&4
-    echo "readv_it.py --mod $name --lith $lith --um $um -- lm $lm" >&4
+    echo "readv_it.py --mod $name --lith $lith --um $um --lm $lm --tmax $tmax --tmin $tmin" >&4
     echo "exit" >&4
 
 # Close fd 4
@@ -62,7 +67,7 @@ cd ../execute_glac1d
     echo "#SBATCH -A jalab" >&3
     echo "#SBATCH -J $run_name" >&3
     echo "#SBATCH --mem-per-cpu=32gb" >&3
-    echo "#SBATCH -t 50" >&3
+    echo "#SBATCH --time=0:30:00" >&3
     echo "#SBATCH --mail-type=ALL"  >&3  # specify what kind of emails you want to get
     echo "#SBATCH --mail-user=rcreel@ldeo.columbia.edu" >&3  # specify email address"
     echo " " >&3
@@ -81,6 +86,8 @@ echo "sbatch $fileName"
 # go back to start
 cd ..
 
+done
+done
 done
 done
 done
