@@ -87,7 +87,7 @@ echo "sbatch $fileName"
 #cd ../code
 
 # go back to start
-cd ..
+cd ../..
 
 done
 done
