@@ -10,7 +10,7 @@ do
 for lith in l71C # l96C
 do
 
-for lm in 3 5 # 7 8 9 10 15 20 30 40 50
+for lm in 3 # 5 7 8 9 10 15 20 30 40 50
 do
 
 for um in p2 # p3 p4 p5

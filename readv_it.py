@@ -70,8 +70,8 @@ def readv():
     lith_thicknesses = [args.lith]
     um = args.um
     lm = args.lm
-    tmax = args.tmax
-    tmin = args.tmin
+    tmax = int(args.tmax)
+    tmin = int(args.tmin)
 
     #ice_models = ['d6g_h6g_']# , 'glac1d_']
     #lith_thicknesses = ['l96C']# , 'l71C']
