@@ -16,10 +16,10 @@ do
 for um in p2 # p3 p4 p5
 do
 
-for tmax in 5010
+for tmax in 10010
 do
 
-for tmin in 3990
+for tmin in 990
 do
 
 # put together file name
@@ -67,8 +67,8 @@ cd execute_gpr
     echo "#SBATCH -o $fileName_out" >&3
     echo "#SBATCH -A jalab" >&3
     echo "#SBATCH -J $run_name" >&3
-    echo "#SBATCH --mem-per-cpu=16gb" >&3
-    echo "#SBATCH --time=0:10:00" >&3
+    echo "#SBATCH --mem-per-cpu=125gb" >&3
+    echo "#SBATCH --time=3:00:00" >&3
     echo "#SBATCH --mail-type=ALL"  >&3  # specify what kind of emails you want to get
     echo "#SBATCH --mail-user=rcreel@ldeo.columbia.edu" >&3  # specify email address"
     echo " " >&3
