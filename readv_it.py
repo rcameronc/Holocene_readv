@@ -36,9 +36,10 @@ from gpflow.config import default_jitter
 # tensorflow
 import tensorflow as tf
 from tensorflow_probability import bijectors as tfb
-
+import argparse
 
 @profile
+
 def readv():
 
     # set the colormap and centre the colorbar
@@ -55,9 +56,21 @@ def readv():
 
     ####################  Initialize parameters #######################
     #################### ---------------------- #######################
-    
-    ice_models = ['d6g_h6g_', 'glac1d_']
-    lith_thicknesses = ['l96C', 'l71C']
+
+    parser = argparse.ArgumentParser(description='import vars via c-line')
+    parser.add_argument("--mod", default='d6g_h6g_')
+    parser.add_argument("--lith", default='l71C')
+    parser.add_argument("--um", default="p2")
+    parser.add_argument("--lm", default="3")
+
+    args = parser.parse_args()
+    ice_models = [args.mod]
+    lith_thicknesses = [args.lith]
+    um = args.um
+    lm = args.lm
+
+    #ice_models = ['d6g_h6g_']# , 'glac1d_']
+    #lith_thicknesses = ['l96C']# , 'l71C']
 
     for i, ice_model in enumerate(ice_models):
         for k, lith_thickness in enumerate(lith_thicknesses):
@@ -80,7 +93,7 @@ def readv():
                 'fennoscandia': [-15, 50, 45, 73],
             }
             extent = locs[place]
-            tmax, tmin, tstep = 7010, 2990, 100
+            tmax, tmin, tstep = 4010, 3490, 100
 
             ages_lgm = np.arange(100, 26000, tstep)[::-1]
 
@@ -307,9 +320,9 @@ def readv():
             ds_areastd = ds_sliced.std(dim='modelrun').load().to_dataset().interp(
                 age=ds_readv.age, lon=ds_readv.lon, lat=ds_readv.lat)
 
-            # loop through models to calculate GPR log likelihood
-
-            runs = ds.modelrun.values.tolist()
+            # loop through all models to calculate GPR log likelihood
+            # runs = ds.modelrun.values.tolist()
+            runs = [f'{ice_model}{lith_thickness}_um{um}_lm{lm}']
 
             modrunlist = []
             loglikelist = []
@@ -319,7 +332,7 @@ def readv():
                 print(f'{modelrun} run number {i}')
 
                 if ice_model == 'glac1d_':
-                    # make prior RSL 
+                    # make prior RSL
                     ds_area = one_mod(path,
                         [ice_model + lith_thickness]).sel(modelrun=modelrun).rsl.sel(
                             age=slice(tmax, tmin),
@@ -598,8 +611,8 @@ def readv():
                     y_pred_out = denormalize(y_pred, df_place.rsl_realresid)
 
                     #reshape output vectors
-                    Xlon = np.array(xyt[:, 0]).reshape((nout, nout, len(ages)))
-                    Xlat = np.array(xyt[:, 1]).reshape((nout, nout, len(ages)))
+#                    Xlon = np.array(xyt[:, 0]).reshape((nout, nout, len(ages)))
+ #                   Xlat = np.array(xyt[:, 1]).reshape((nout, nout, len(ages)))
                     Zp = np.array(y_pred_out).reshape(nout, nout, len(ages))
                     varp = np.array(var).reshape(nout, nout, len(ages))
 
@@ -959,23 +972,18 @@ def readv():
 
 
                         A1, var1 = reshape_decomp(k1,
-                                                  var=df_place.rsl_er_max.ravel()**2 +
-                                                  df_place.rsl_giaprior_std.ravel()**2)  #gia spatial
+                                                  var=df_place.rsl_er_max.ravel()**2)  #gia spatial
                         A2, var2 = reshape_decomp(k2,
-                                                  var=df_place.rsl_er_max.ravel()**2 +
-                                                  df_place.rsl_giaprior_std.ravel()**2)  #gia temporal
+                                                  var=df_place.rsl_er_max.ravel()**2)  #gia temporal
                         A3, var3 = reshape_decomp(
                             k3,
-                            var=df_place.rsl_er_max.ravel()**2 +
-                            df_place.rsl_giaprior_std.ravel()**2)  #readvance spatial
+                            var=df_place.rsl_er_max.ravel()**2)  #readvance spatial
                         A4, var4 = reshape_decomp(
                             k4,
-                            var=df_place.rsl_er_max.ravel()**2 +
-                            df_place.rsl_giaprior_std.ravel()**2)  #readvance temporal
+                            var=df_place.rsl_er_max.ravel()**2)  #readvance temporal
                         A5, var5 = reshape_decomp(
                             k5,
-                            var=df_place.rsl_er_max.ravel()**2 +
-                            df_place.rsl_giaprior_std.ravel()**2)  #readvance spatial
+                            var=df_place.rsl_er_max.ravel()**2)  #readvance spatial
 
                         da_A1 = make_dataarray(A1)
                         da_var1 = make_dataarray(var1)
@@ -1015,13 +1023,13 @@ def readv():
                     pass
 
             #store log likelihood in dataframe
-            df_out = pd.DataFrame({'modelrun': modrunlist, 
+                df_out = pd.DataFrame({'modelrun': modrunlist,
                                  'log_marginal_likelihood': loglikelist})
 
 
-            writepath = f'output/{path_gen}_loglikelihood'
-            df_out.to_csv(writepath, index=False)
-            df_likes = pd.read_csv(writepath)
+                writepath = f'output/{path_gen}_loglikelihood'
+                df_out.to_csv(writepath, index=False)
+                df_likes = pd.read_csv(writepath)
 
             # make heatmap for upper vs. lower mantle viscosities at one lithosphere thickness
 
@@ -1031,7 +1039,7 @@ def readv():
                 df_likes['lith'] = [key.split('_')[1][1:3] for key in df_likes.modelrun]
                 df_likes['icemodel'] = [key.split('_')[0] for key in df_likes.modelrun]
             elif ice_model == 'd6g_h6g_':
-                df_likes = df_likes.drop([36])
+#                 df_likes = df_likes.drop([36])
                 df_likes['um'] = [key.split('_')[3][3:] for key in df_likes.modelrun]
                 df_likes['lm'] = [key.split('_')[4][2:] for key in df_likes.modelrun]
                 df_likes['lith'] = [key.split('_')[2][1:3] for key in df_likes.modelrun]
@@ -1046,7 +1054,7 @@ def readv():
             sns.heatmap(heatmap,  cmap='coolwarm', ax=ax,  cbar_kws={'label': 'negative log likelihood'})
             ax.set_title(f'{place} {ages[0]} - {ages[-1]} yrs \n {ice_model} : {df_likes.lith[0]} km lithosphere'); # (havsine)
 
-            fig.savefig(dirName + f'{path_gen}_likelihood_heatmap', transparent=True)   # _havsine 
+            fig.savefig(dirName + f'{path_gen}_likelihood_heatmap', transparent=True)   # _havsine
 
 if __name__ == '__main__':
     readv()

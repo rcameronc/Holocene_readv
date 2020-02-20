@@ -17,6 +17,7 @@ dependencies:
   - jupyterlab
   - memory_profiler
   - seaborn
+  - cudatoolkit=10.1
   - pip:
     - tensorflow==2.1.0
     - git+https://github.com/GPflow/GPflow.git@develop#egg=gpflow

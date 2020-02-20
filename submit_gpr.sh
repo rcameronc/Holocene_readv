@@ -1,0 +1,87 @@
+#!/bin/bash
+
+## adjust for your love numbers
+
+# Ice model
+for name in glac1d d6g_h6g_
+do
+
+#Earth model
+for lm in 3 5 7 8 9 10 15 20 30 40 50
+do
+
+for lith in 71C 96C
+do
+
+for um in p2 p3 p4 p5
+do
+
+
+# put together file name
+fileName="execute_${name}_${lith}_${um}_${lm}"
+fileName_run="run_${name}_${lith}_${um}_${lm}.m"
+fileName_out="out_${name}_${lith}_${um}_${lm}.out"
+run_name="${name}_${lith}_${um}_${lm}";
+
+# go to run folder
+
+## create this folder in the same place as this file
+rm run_gpr
+mkdir run_gpr
+cd run_gpr
+
+# write an execute script that passes parameters on to execute script
+rm $fileName_run
+
+# Open file descriptor (fd) 4 for read/write on a text file.
+exec 4<> $fileName_run
+
+    # Let's print some text to fd 3
+    echo "cd .." >&4
+    ## change this to "SL_equation_viscoelastic_ ...()"
+    # echo "SL_equation_viscoelastic_${name}('l${lith}.um${um}.lm${lm}')" >&4
+    echo "readv_022020_it.py --mod $name --lith $lith --um $um -- lm $lm" >&4
+    echo "exit" >&4
+
+# Close fd 4
+exec 4>&-
+
+
+## create this folder in the same directory as this file
+# go to execute folder
+cd ../execute_glac1d
+# rm $fileName
+# write a submit script that passes parameters on to execute script
+
+    # Open file descriptor (fd) 3 for read/write on a text file.
+    exec 3<> $fileName
+
+    # Let's print some text to fd 3
+    echo "#!/bin/bash" >&3
+    echo "#SBATCH -o $fileName_out" >&3
+    echo "#SBATCH -A jalab" >&3
+    echo "#SBATCH -J $run_name" >&3
+    echo "#SBATCH --mem-per-cpu=32gb" >&3
+    echo "#SBATCH -t 50" >&3
+    echo "#SBATCH --mail-type=ALL"  >&3  # specify what kind of emails you want to get
+    echo "#SBATCH --mail-user=rcreel@ldeo.columbia.edu" >&3  # specify email address"
+    echo " " >&3
+    #echo "matlab -nojvm -nodisplay -nosplash < ../run_readv/${fileName_run} " >&3
+    echo "conda activate gpflow6_0" >&3
+    echo "python "../run_gpr/${fileName_run}" " >&3
+    # Close fd 3
+    exec 3>&-
+
+# submit execute file
+
+eval "sbatch $fileName"
+echo "sbatch $fileName"
+#cd ../code
+
+# go back to start
+cd ..
+
+done
+done
+done
+done
