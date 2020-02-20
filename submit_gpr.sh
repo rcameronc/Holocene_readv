@@ -55,8 +55,8 @@ exec 4>&-
 ## create this folder in the same directory as this file
 # go to execute folder
 rm -r execute_gpr
-mkdir execute_gpr
-cd ../execute_gpr
+mkdir ../execute_gpr
+cd execute_gpr
 # rm $fileName
 # write a submit script that passes parameters on to execute script
 
@@ -75,7 +75,7 @@ cd ../execute_gpr
     echo " " >&3
     #echo "matlab -nojvm -nodisplay -nosplash  ../run_readv/${fileName_run} " >&3
     echo "module load anaconda" >&3
-    echo "conda activate gpflow6_0" >&3
+    echo "source activate gpflow6_0" >&3
     echo "../run_gpr/${fileName_run}" >&3
     # Close fd 3
     exec 3>&-
