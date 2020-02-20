@@ -24,7 +24,7 @@ do
 
 # put together file name
 fileName="execute_${name}${lith}_${um}_${lm}_${tmax}_${tmin}"
-fileName_run="run_${name}${lith}_${um}_${lm}_${tmax}_${tmin}"
+fileName_run="run_${name}${lith}_${um}_${lm}_${tmax}_${tmin}.sh"
 fileName_out="out_${name}${lith}_${um}_${lm}_${tmax}_${tmin}.out"
 run_name="${name}${lith}_${um}_${lm}_${tmax}_${tmin}";
 
@@ -67,15 +67,16 @@ cd execute_gpr
     echo "#SBATCH -o $fileName_out" >&3
     echo "#SBATCH -A jalab" >&3
     echo "#SBATCH -J $run_name" >&3
-    echo "#SBATCH --mem-per-cpu=32gb" >&3
-    echo "#SBATCH --time=0:30:00" >&3
+    echo "#SBATCH --mem-per-cpu=16gb" >&3
+    echo "#SBATCH --time=0:10:00" >&3
     echo "#SBATCH --mail-type=ALL"  >&3  # specify what kind of emails you want to get
     echo "#SBATCH --mail-user=rcreel@ldeo.columbia.edu" >&3  # specify email address"
     echo " " >&3
     #echo "matlab -nojvm -nodisplay -nosplash  ../run_readv/${fileName_run} " >&3
-    echo "module load anaconda" >&3
+    # echo "module load anaconda" >&3
     echo "source activate gpflow6_0" >&3
-    echo "cd ../run_gpr/${fileName_run}" >&3
+    echo "cd ../run_gpr/" >&3
+    echo "bash ${fileName_run}" >&3
     # Close fd 3
     exec 3>&-
 
