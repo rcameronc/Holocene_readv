@@ -26,12 +26,12 @@ do
 fileName="execute_${name}${lith}_${um}_${lm}_${tmax}_${tmin}"
 fileName_run="run_${name}${lith}_${um}_${lm}_${tmax}_${tmin}"
 fileName_out="out_${name}${lith}_${um}_${lm}_${tmax}_${tmin}.out"
-run_name="${name}_${lith}${um}_${lm}_${tmax}_${tmin}";
+run_name="${name}${lith}_${um}_${lm}_${tmax}_${tmin}";
 
 # go to run folder
 
 ## create this folder in the same place as this file
-rm run_gpr
+rm -r run_gpr
 mkdir run_gpr
 cd run_gpr
 
@@ -54,7 +54,7 @@ exec 4>&-
 
 ## create this folder in the same directory as this file
 # go to execute folder
-rm execute_gpr
+rm -r execute_gpr
 mkdir execute_gpr
 cd ../execute_gpr
 # rm $fileName
