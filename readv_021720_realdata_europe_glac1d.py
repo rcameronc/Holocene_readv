@@ -70,7 +70,7 @@ def readv():
         'europe': [-20, 15, 35, 70]
     }
     extent = locs[place]
-    tmax, tmin, tstep = 10050, 450, 100
+    tmax, tmin, tstep = 5050, 4050, 100
 
     ages_lgm = np.arange(100, 26000, tstep)[::-1]
 
@@ -384,7 +384,8 @@ def readv():
     for i, row in df_place.iterrows():
 
         df_place.loc[i, 'rsl_realresid'] = df_place.rsl[i] - ds_select(ds_area)
-        df_place.loc[i, 'rsl_totalprior'] = ds_select(ds_prior)
+        df_place.loc[i, 'rsl_giaprior'] = ds_select(ds_area)
+        df_place.loc[i, 'rsl_giaprior_std'] = ds_select(ds_areastd)
     print('number of datapoints = ', df_place.shape)
 
     ##################	  RUN GP REGRESSION 	#######################
@@ -587,7 +588,7 @@ def readv():
 #     k2 = HaversineKernel_Matern32(active_dims=[0, 1])
 #     k2.lengthscale = bounded_parameter(10, 5000, 100)  #GIA space
 #     k2.variance = bounded_parameter(0.1, 100, 2)
-    
+
     k2 = gpf.kernels.Matern32(active_dims=[0,1])
     k2.lengthscale = bounded_parameter(1, 10, 4)  #GIA space
     k2.variance = bounded_parameter(0.1, 100, 2)
@@ -952,7 +953,7 @@ def readv():
 
     #################   DECOMPOSE GPR INTO KERNELS ####################
     ##################  --------------------	 ######################
-    
+
 
     def predict_decomp_f(m,
                          custom_kernel,
