@@ -16,10 +16,10 @@ do
 for um in p2 # p3 p4 p5
 do
 
-for tmax in 10010
+for tmax in 12010
 do
 
-for tmin in 990
+for tmin in 190
 do
 
 # put together file name

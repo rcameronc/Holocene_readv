@@ -561,21 +561,21 @@ def readv():
 
                     #define kernels  with bounds
 
-    #                 k1 = HaversineKernel_Matern32(active_dims=[0, 1])
-    #                 k1.lengthscale = bounded_parameter(5000, 30000, 10000)  #hemispheric space
-    #                 k1.variance = bounded_parameter(0.1, 100, 2)
+                    k1 = HaversineKernel_Matern32(active_dims=[0, 1])
+                    k1.lengthscale = bounded_parameter(5000, 30000, 10000)  #hemispheric space
+                    k1.variance = bounded_parameter(0.1, 100, 2)
 
-                    k1 = gpf.kernels.Matern32(active_dims=[0, 1])
-                    k1.lengthscale = bounded_parameter(50, 500, 60)  #hemispheric space
-                    k1.variance = bounded_parameter(0.05, 100, 2)
+                    # k1 = gpf.kernels.Matern32(active_dims=[0, 1])
+                    # k1.lengthscale = bounded_parameter(50, 500, 60)  #hemispheric space
+                    # k1.variance = bounded_parameter(0.05, 100, 2)
 
-    #                 k2 = HaversineKernel_Matern32(active_dims=[0, 1])
-    #                 k2.lengthscale = bounded_parameter(10, 5000, 100)  #GIA space
-    #                 k2.variance = bounded_parameter(0.1, 100, 2)
+                    k2 = HaversineKernel_Matern32(active_dims=[0, 1])
+                    k2.lengthscale = bounded_parameter(10, 5000, 100)  #GIA space
+                    k2.variance = bounded_parameter(0.1, 100, 2)
 
-                    k2 = gpf.kernels.Matern32(active_dims=[0,1])
-                    k2.lengthscale = bounded_parameter(1, 50, 5)  #GIA space
-                    k2.variance = bounded_parameter(0.05, 100, 2)
+                    # k2 = gpf.kernels.Matern32(active_dims=[0,1])
+                    # k2.lengthscale = bounded_parameter(1, 50, 5)  #GIA space
+                    # k2.variance = bounded_parameter(0.05, 100, 2)
 
                     k3 = gpf.kernels.Matern32(active_dims=[2])  #GIA time
                     k3.lengthscale = bounded_parameter(8000, 20000, 10000)
