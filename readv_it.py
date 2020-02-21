@@ -689,8 +689,14 @@ def readv():
                             resid_it = da_zp.sel(age=slice(age, age - step))
                             rsl, var = df_it.rsl, df_it.rsl_er_max.values**2
                             lat_it, lon_it = df_it.lat, df_it.lon
-                            vmin = ds_giapriorinterp.rsl.min().values  # + 10
-                            vmax = ds_giapriorinterp.rsl.max().values  # - 40
+
+                            if ice_model == 'glac1d_':
+                                vmin = ds_giapriorinterp.rsl.min().values  + 50
+                                vmax = ds_giapriorinterp.rsl.max().values  - 100
+                            elif ice_model =='d6g_h6g_':
+                                vmin = ds_giapriorinterp.rsl.min().values  + 20
+                                vmax = ds_giapriorinterp.rsl.max().values  + 10
+
                             vmin_std = 0
                             vmax_std = 1
                             tmin_it = np.round(age - step, 2)
@@ -813,7 +819,7 @@ def readv():
                     #         ax4.set_extent(extent_)
 
                     ########## ----- Save figures -------- #######################
-                        fig.savefig(dirName + f'{path_gen}_{age}_3Dfig', transparent=True)
+                            fig.savefig(dirName + f'{path_gen}_{age}_3Dfig', transparent=True)
 
                     ##################	CHOOSE LOCS W/NUF SAMPS #######################
                     ##################  --------------------	 ######################
@@ -836,7 +842,7 @@ def readv():
                         return df_locs
 
 
-                    number = 6
+                    number = 8
                     df_nufsamps = locs_with_enoughsamples(df_place, place, number)
                     len(df_nufsamps.locnum.unique())
 
@@ -850,7 +856,7 @@ def readv():
                                       method='nearest')
 
 
-                    fig, ax = plt.subplots(2, len(df_nufsamps.locnum.unique()), figsize=(18, 8))
+                    fig, ax = plt.subplots(4, len(df_nufsamps.locnum.unique()), figsize=(18, 16))
                     ax = ax.ravel()
                     colors = ['darkgreen', 'darkblue', 'darkred']
                     fontsize = 18
