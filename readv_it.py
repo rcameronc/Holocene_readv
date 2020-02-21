@@ -83,7 +83,7 @@ def readv():
             ice_model = ice_model # 'd6g_h6g_' # 'glac1d_' #   #
             lith_thickness = lith_thickness # 'l96'  # 'l90C'
             model = ice_model + lith_thickness
-            place = 'fennoscandia'
+            place = 'atlantic'
             mantle = f'um{um}_lm{lm}'
 
             locs = {
@@ -94,7 +94,7 @@ def readv():
                 'namerica': [-150, -20, 10, 75],
                 'eastcoast': [-88, -65, 15, 40],
                 'europe': [-20, 15, 35, 70],
-                'atlantic':[-85,10, 25, 60],
+                'atlantic':[-85,50, 25, 73],
                 'fennoscandia': [-15, 50, 45, 73],
             }
             extent = locs[place]
