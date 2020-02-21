@@ -3,17 +3,17 @@
 ## adjust for your love numbers
 
 # Ice model
-for name in glac1d_ # d6g_h6g_
+for name in glac1d_ d6g_h6g_
 do
 
 #Earth model
-for lith in l71C # l96C
+for lith in l71C l96C
 do
 
-for lm in 3 # 5 7 8 9 10 15 20 30 40 50
+for lm in 3  5 7 8 9 10 15 20 30 40 50
 do
 
-for um in p2 # p3 p4 p5
+for um in p2  p3 p4 p5
 do
 
 for tmax in 12010
