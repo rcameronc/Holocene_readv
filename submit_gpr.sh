@@ -22,11 +22,14 @@ do
 for tmin in 1490
 do
 
+for place in atlantic
+do
+
 # put together file name
-fileName="execute_${name}${lith}_${um}_${lm}_${tmax}_${tmin}"
-fileName_run="run_${name}${lith}_${um}_${lm}_${tmax}_${tmin}.sh"
-fileName_out="out_${name}${lith}_${um}_${lm}_${tmax}_${tmin}.out"
-run_name="${name}${lith}_${um}_${lm}_${tmax}_${tmin}";
+fileName="execute_${name}${lith}_${um}_${lm}_${tmax}_${tmin}_${place}"
+fileName_run="run_${name}${lith}_${um}_${lm}_${tmax}_${tmin}_${place}.sh"
+fileName_out="out_${name}${lith}_${um}_${lm}_${tmax}_${tmin}_${place}.out"
+run_name="${name}${lith}_${um}_${lm}_${tmax}_${tmin}_${place}";
 
 # go to run folder
 
@@ -42,7 +45,9 @@ exec 4<> $fileName_run
 
     # Let's print some text to fd 3
     echo "cd .." >&4
-    echo "python -m memory_profiler readv_it.py --mod $name --lith $lith --um $um --lm $lm --tmax $tmax --tmin $tmin" >&4
+    echo "python -m memory_profiler readv_it.py --mod $name 
+            --lith $lith --um $um --lm $lm --tmax $tmax --tmin $tmin
+            --place atlantic" >&4
     echo "exit" >&4
 
 # Close fd 4
