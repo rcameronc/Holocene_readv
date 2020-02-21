@@ -8,7 +8,7 @@ from memory_profiler import profile
 import numpy as np
 import pandas as pd
 import xarray as xr
-import dask.array as da
+# import dask.array as da
 import scipy.io as io
 from itertools import product
 import glob
@@ -84,6 +84,7 @@ def readv():
             lith_thickness = lith_thickness # 'l96'  # 'l90C'
             model = ice_model + lith_thickness
             place = 'fennoscandia'
+            mantle = f'um{um}_lm{lm}'
 
             locs = {
                 'england': [-12, 2, 50, 60],
@@ -122,57 +123,57 @@ def readv():
                              & (dfind.lat < extent[3])][[
                                  'lat', 'lon', 'rsl', 'rsl_er_max', 'age'
                              ]]
-            # & (df_place.rsl_er_max < 1)
             df_place.shape
 
             ####################  	Plot locations  	#######################
             #################### ---------------------- #######################
 
             #get counts by location rounded to nearest 0.1 degree
-            df_rnd = df_place.copy()
-            df_rnd.lat = np.round(df_rnd.lat, 1)
-            df_rnd.lon = np.round(df_rnd.lon, 1)
-            dfcounts_place = df_rnd.groupby(
-                ['lat', 'lon']).count().reset_index()[['lat', 'lon', 'rsl', 'age']]
+            if plotting == 'true':
+                df_rnd = df_place.copy()
+                df_rnd.lat = np.round(df_rnd.lat, 1)
+                df_rnd.lon = np.round(df_rnd.lon, 1)
+                dfcounts_place = df_rnd.groupby(
+                    ['lat', 'lon']).count().reset_index()[['lat', 'lon', 'rsl', 'age']]
 
-            #plot
-            fig = plt.figure(figsize=(10, 7))
-            ax = plt.subplot(1, 1, 1, projection=ccrs.PlateCarree())
+                #plot
+                fig = plt.figure(figsize=(10, 7))
+                ax = plt.subplot(1, 1, 1, projection=ccrs.PlateCarree())
 
-            ax.set_extent(extent)
-            ax.coastlines(resolution='110m', linewidth=1, zorder=2)
-            ax.add_feature(cfeature.OCEAN, zorder=0)
-            ax.add_feature(cfeature.LAND, color='palegreen', zorder=1)
-            ax.add_feature(cfeature.BORDERS, linewidth=0.5, zorder=3)
-            ax.gridlines(linewidth=1, color='white', alpha=0.5, zorder=4)
-            scat = ax.scatter(dfcounts_place.lon,
-                              dfcounts_place.lat,
-                              s=dfcounts_place.rsl * 70,
-                              c='lightsalmon',
-                              vmin=-20,
-                              vmax=20,
-                              cmap='coolwarm',
-                              edgecolor='k',
-                              linewidths=1,
-                              transform=ccrs.PlateCarree(),
-                              zorder=5)
-            size = Line2D(range(4),
-                          range(4),
-                          color="black",
-                          marker='o',
-                          linewidth=0,
-                          linestyle='none',
-                          markersize=16,
-                          markerfacecolor="lightsalmon")
-            labels = ['RSL datapoint location']
-            leg = plt.legend([size],
-                             labels,
-                             loc='lower left',
-                             bbox_to_anchor=(0.00, 0.00),
-                             prop={'size': 20},
-                             fancybox=True)
-            leg.get_frame().set_edgecolor('k')
-            ax.set_title('')
+                ax.set_extent(extent)
+                ax.coastlines(resolution='110m', linewidth=1, zorder=2)
+                ax.add_feature(cfeature.OCEAN, zorder=0)
+                ax.add_feature(cfeature.LAND, color='palegreen', zorder=1)
+                ax.add_feature(cfeature.BORDERS, linewidth=0.5, zorder=3)
+                ax.gridlines(linewidth=1, color='white', alpha=0.5, zorder=4)
+                scat = ax.scatter(dfcounts_place.lon,
+                                  dfcounts_place.lat,
+                                  s=dfcounts_place.rsl * 70,
+                                  c='lightsalmon',
+                                  vmin=-20,
+                                  vmax=20,
+                                  cmap='coolwarm',
+                                  edgecolor='k',
+                                  linewidths=1,
+                                  transform=ccrs.PlateCarree(),
+                                  zorder=5)
+                size = Line2D(range(4),
+                              range(4),
+                              color="black",
+                              marker='o',
+                              linewidth=0,
+                              linestyle='none',
+                              markersize=16,
+                              markerfacecolor="lightsalmon")
+                labels = ['RSL datapoint location']
+                leg = plt.legend([size],
+                                 labels,
+                                 loc='lower left',
+                                 bbox_to_anchor=(0.00, 0.00),
+                                 prop={'size': 20},
+                                 fancybox=True)
+                leg.get_frame().set_edgecolor('k')
+                ax.set_title('')
 
             ####################  Make 3D fingerprint  #######################
             #################### ---------------------- #######################
@@ -570,7 +571,7 @@ def readv():
                     # k1.variance = bounded_parameter(0.05, 100, 2)
 
                     k2 = HaversineKernel_Matern32(active_dims=[0, 1])
-                    k2.lengthscale = bounded_parameter(10, 5000, 100)  #GIA space
+                    k2.lengthscale = bounded_parameter(1, 5000, 1000)  #GIA space
                     k2.variance = bounded_parameter(0.1, 100, 2)
 
                     # k2 = gpf.kernels.Matern32(active_dims=[0,1])
@@ -586,7 +587,7 @@ def readv():
                     k4.variance = bounded_parameter(0.1, 100, 1)
 
                     k5 = gpf.kernels.White(active_dims=[2])
-                    k5.variance = bounded_parameter(0.1, 100, 1)
+                    k5.variance = bounded_parameter(0.01, 100, 1)
 
                     kernel = (k1 * k3) + (k2 * k4) + k5
 
@@ -664,7 +665,7 @@ def readv():
                 ##################	  	 SAVE NETCDFS 	 	#######################
                 ##################  --------------------	 ######################
 
-                path_gen = f'{ages[0]}_{ages[-1]}_{model}_{place}'
+                path_gen = f'{ages[0]}_{ages[-1]}_{model}_{mantle}_{place}'
                 da_zp.to_netcdf('output/' + path_gen + '_da_zp')
                 da_giapriorinterp.to_netcdf('output/' + path_gen + '_giaprior')
                 da_priorplusgpr.to_netcdf('output/' + path_gen + '_posterior')
@@ -812,7 +813,7 @@ def readv():
                     #         ax4.set_extent(extent_)
 
                     ########## ----- Save figures -------- #######################
-                        fig.savefig(dirName + f'{path_gen}_{age}_3D_fig', transparent=True)
+                        fig.savefig(dirName + f'{path_gen}_{age}_3Dfig', transparent=True)
 
                     ##################	CHOOSE LOCS W/NUF SAMPS #######################
                     ##################  --------------------	 ######################
@@ -849,7 +850,7 @@ def readv():
                                       method='nearest')
 
 
-                    fig, ax = plt.subplots(1, len(df_nufsamps.locnum.unique()), figsize=(18, 4))
+                    fig, ax = plt.subplots(2, len(df_nufsamps.locnum.unique()), figsize=(18, 8))
                     ax = ax.ravel()
                     colors = ['darkgreen', 'darkblue', 'darkred']
                     fontsize = 18
@@ -898,14 +899,12 @@ def readv():
 
                         ax[i].legend(loc='lower left')
 
-                    fig.savefig(dirName + f'{ages[0]}to{ages[-1]}_{place}_realdata_fig_1D',
+                    fig.savefig(dirName + f'{path_gen}_1Dfig',
                                 transparent=True)
 
                     #plot locations of data
-                    fig, ax = plt.subplots(1,
-                                           len(df_nufsamps.locnum.unique()),
-                                           figsize=(18, 4),
-                                           subplot_kw=dict(projection=projection))
+                    fig, ax = plt.subplots(2,len(df_nufsamps.locnum.unique()),
+                                           figsize=(18, 4), subplot_kw=dict(projection=projection))
                     ax = ax.ravel()
 
                     da_zeros = xr.zeros_like(da_zp)
@@ -930,7 +929,7 @@ def readv():
                         da_zeros[0].plot(ax=ax[i], cmap='Greys', add_colorbar=False)
                         ax[i].set_title(site[0], fontsize=fontsize)
 
-                    fig.savefig(dirName + f'{path_gen}_1Dlocs_fig', transparent=True)
+                    fig.savefig(dirName + f'{path_gen}_1Dfig_locs', transparent=True)
 
                     #################   DECOMPOSE GPR INTO KERNELS ####################
                     ##################  --------------------	 ######################
@@ -1004,19 +1003,27 @@ def readv():
                         da_A5 = make_dataarray(A5)
                         da_var5 = make_dataarray(var5)
 
+                        da_A1.to_netcdf(f'output/{path_gen}_da_A1')
+                        da_var1.to_netcdf(f'output/{path_gen}_da_var1')
+                        da_A2.to_netcdf(f'output/{path_gen}_da_A2')
+                        da_var2.to_netcdf(f'output/{path_gen}_da_var2')
+                        da_A3.to_netcdf(f'output/{path_gen}_da_A3')
+                        da_var3.to_netcdf(f'output/{path_gen}_da_var3')
+                        da_A4.to_netcdf(f'output/{path_gen}_da_A4')
+                        da_var4.to_netcdf(f'output/{path_gen}_da_var4')
+                        da_A5.to_netcdf(f'output/{path_gen}_da_A5')
+                        da_var5.to_netcdf(f'output/{path_gen}_da_var5')
+
+
                         #################   PLOT DECOMPOSED KERNELS    ####################
                         ##################  --------------------	   ####################
 
                         fig, ax = plt.subplots(1, 6, figsize=(24, 4))
                         ax = ax.ravel()
                         da_A1[0, :, :].plot(ax=ax[0], cmap='RdBu_r')
-
                         da_A2[0, :, :].plot(ax=ax[1], cmap='RdBu_r')
-
                         da_A3[0, :, :].plot(ax=ax[2], cmap='RdBu_r')
-
                         da_A4[:, 0, 0].plot(ax=ax[3])
-
                         da_A5[:, 0, 0].plot(ax=ax[4])
 
                         fig.savefig(dirName + f'{path_gen}_decompkernels', transparent=True)
