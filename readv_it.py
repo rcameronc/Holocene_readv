@@ -659,9 +659,9 @@ def readv():
                     # add total prior RSL back into GPR
                     da_priorplusgpr = da_zp + da_giapriorinterp
 
-                    return ages, da_zp, ds_giapriorinterp, da_giapriorinterpstd, da_giapriorinterp, da_priorplusgpr, da_varp, modrunlist, loglikelist
+                    return k1, k2, k3, k4, k5, nout, xyt, m, ages, da_zp, ds_giapriorinterp, da_giapriorinterpstd, da_giapriorinterp, da_priorplusgpr, da_varp, modrunlist, loglikelist
 
-                ages, da_zp, ds_giapriorinterp, da_giapriorinterpstd, da_giapriorinterp, da_priorplusgpr, da_varp, modrunlist, loglikelist = run_gpr()
+                k1, k2, k3, k4, k5, nout, xyt, m, ages, da_zp, ds_giapriorinterp, da_giapriorinterpstd, da_giapriorinterp, da_priorplusgpr, da_varp, modrunlist, loglikelist = run_gpr()
                 ##################	  	 SAVE NETCDFS 	 	#######################
                 ##################  --------------------	 ######################
 
@@ -974,23 +974,15 @@ def readv():
                                                 dims=dims).transpose('age', 'lat', 'lon')
 
 
-                        A1, var1 = reshape_decomp(k1,
-                                                  var=df_place.rsl_er_max.ravel()**2)  #gia spatial
-                        A2, var2 = reshape_decomp(k2,
-                                                  var=df_place.rsl_er_max.ravel()**2)  #gia temporal
-                        A3, var3 = reshape_decomp(
-                            k3,
-                            var=df_place.rsl_er_max.ravel()**2)  #readvance spatial
-                        A4, var4 = reshape_decomp(
-                            k4,
-                            var=df_place.rsl_er_max.ravel()**2)  #readvance temporal
-                        A5, var5 = reshape_decomp(
-                            k5,
-                            var=df_place.rsl_er_max.ravel()**2)  #readvance spatial
+                        A1, var1 = reshape_decomp(k1,var=df_place.rsl_er_max.ravel()**2)  #gia spatial
+                        A2, var2 = reshape_decomp(k2,var=df_place.rsl_er_max.ravel()**2)  #gia temporal
+                        A3, var3 = reshape_decomp(k3,var=df_place.rsl_er_max.ravel()**2)  #readvance spatial
+                        A4, var4 = reshape_decomp(k4,var=df_place.rsl_er_max.ravel()**2)  #readvance temporal
+                        A5, var5 = reshape_decomp(k5, var=df_place.rsl_er_max.ravel()**2)  #readvance spatial
 
                         da_A1 = make_dataarray(A1)
                         da_var1 = make_dataarray(var1)
-
+                        
                         da_A2 = make_dataarray(A2)
                         da_var2 = make_dataarray(var2)
 
