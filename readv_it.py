@@ -79,7 +79,7 @@ def readv():
     for i, ice_model in enumerate(ice_models):
         for k, lith_thickness in enumerate(lith_thicknesses):
             plotting = 'true'
-            decomp = 'true'
+            decomp = 'false'
             ice_model = ice_model # 'd6g_h6g_' # 'glac1d_' #   #
             lith_thickness = lith_thickness # 'l96'  # 'l90C'
             model = ice_model + lith_thickness
@@ -982,7 +982,7 @@ def readv():
 
                         da_A1 = make_dataarray(A1)
                         da_var1 = make_dataarray(var1)
-                        
+
                         da_A2 = make_dataarray(A2)
                         da_var2 = make_dataarray(var2)
 
