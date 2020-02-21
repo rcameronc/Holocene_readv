@@ -659,9 +659,9 @@ def readv():
                     # add total prior RSL back into GPR
                     da_priorplusgpr = da_zp + da_giapriorinterp
 
-                    return ages, da_zp, da_giapriorinterp, da_priorplusgpr, da_varp, modrunlist, loglikelist
+                    return ages, da_zp, ds_giapriorinterp, da_giapriorinterpstd, da_giapriorinterp, da_priorplusgpr, da_varp, modrunlist, loglikelist
 
-                ages, da_zp, da_giapriorinterp, da_priorplusgpr, da_varp, modrunlist, loglikelist = run_gpr()
+                ages, da_zp, ds_giapriorinterp, da_giapriorinterpstd, da_giapriorinterp, da_priorplusgpr, da_varp, modrunlist, loglikelist = run_gpr()
                 ##################	  	 SAVE NETCDFS 	 	#######################
                 ##################  --------------------	 ######################
 
