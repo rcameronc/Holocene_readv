@@ -94,7 +94,7 @@ def readv():
                 'eastcoast': [-88, -65, 15, 40],
                 'europe': [-20, 15, 35, 70],
                 'atlantic':[-85,50, 25, 73],
-                'fennoscandia': [-15, 50, 45, 73],
+                'fennoscandia': [-15, 60, 45, 77],
             }
             extent = locs[place]
             tmax, tmin, tstep = tmax, tmin, 100
@@ -604,7 +604,7 @@ def readv():
                     print('model minimized, time=', time.time() - start)
 
                     # output space
-                    nout = 50
+                    nout = 400
                     lat = np.linspace(min(ds_area.lat), max(ds_area.lat), nout)
                     lon = np.linspace(min(ds_area.lon), max(ds_area.lon), nout)
                     ages = ages_lgm[(ages_lgm < tmax) & (ages_lgm > tmin)]
