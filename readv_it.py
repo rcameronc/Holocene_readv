@@ -64,6 +64,7 @@ def readv():
     parser.add_argument("--lm", default="3")
     parser.add_argument("--tmax", default="4010")
     parser.add_argument("--tmin", default="2990")
+    parser.add_argument("--place", default="fennoscandia")
 
     args = parser.parse_args()
     ice_models = [args.mod]
@@ -72,18 +73,16 @@ def readv():
     lm = args.lm
     tmax = int(args.tmax)
     tmin = int(args.tmin)
-
-    #ice_models = ['d6g_h6g_']# , 'glac1d_']
-    #lith_thicknesses = ['l96C']# , 'l71C']
+    place = args.place
 
     for i, ice_model in enumerate(ice_models):
         for k, lith_thickness in enumerate(lith_thicknesses):
             plotting = 'true'
             decomp = 'false'
-            ice_model = ice_model # 'd6g_h6g_' # 'glac1d_' #   #
-            lith_thickness = lith_thickness # 'l96'  # 'l90C'
+            ice_model = ice_model 
+            lith_thickness = lith_thickness 
             model = ice_model + lith_thickness
-            place = 'atlantic'
+            place = place
             mantle = f'um{um}_lm{lm}'
 
             locs = {
@@ -622,7 +621,7 @@ def readv():
                     varp = np.array(var).reshape(nout, nout, len(ages))
 
                     #print kernel details
-                #     print_summary(m, fmt='notebook')
+                    print_summary(m, fmt='notebook')
                     print('time elapsed = ', time.time() - start)
 
                     print('negative log marginal likelihood =',
