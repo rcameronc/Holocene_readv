@@ -12,3 +12,4 @@ WARNING:tensorflow:From readv_it.py:469: AffineScalar.__init__ (from tensorflow_
 Instructions for updating:
 `AffineScalar` bijector is deprecated; please use `tfb.Shift(loc)(tfb.Scale(...))` instead.
 2020-02-21 08:52:06.261146: W tensorflow/python/util/util.cc:319] Sets are not currently considered sequences, but this may change in the future, so consider avoiding using them.
+slurmstepd: error: *** JOB 17972112 ON node024 CANCELLED AT 2020-02-21T20:42:58 DUE TO TIME LIMIT ***

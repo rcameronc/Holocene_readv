@@ -12,3 +12,1050 @@ WARNING:tensorflow:From readv_it.py:469: AffineScalar.__init__ (from tensorflow_
 Instructions for updating:
 `AffineScalar` bijector is deprecated; please use `tfb.Shift(loc)(tfb.Scale(...))` instead.
 2020-02-21 08:11:06.882088: W tensorflow/python/util/util.cc:319] Sets are not currently considered sequences, but this may change in the future, so consider avoiding using them.
+readv_it.py:715: RuntimeWarning: More than 20 figures have been opened. Figures created through the pyplot interface (`matplotlib.pyplot.figure`) are retained until explicitly closed and may consume too much memory. (To control this warning, see the rcParam `figure.max_open_warning`).
+  subplot_kw=dict(projection=projection))
+readv_it.py:859: RuntimeWarning: More than 20 figures have been opened. Figures created through the pyplot interface (`matplotlib.pyplot.figure`) are retained until explicitly closed and may consume too much memory. (To control this warning, see the rcParam `figure.max_open_warning`).
+  fig, ax = plt.subplots(4, len(df_nufsamps.locnum.unique()), figsize=(18, 16))
+readv_it.py:913: RuntimeWarning: More than 20 figures have been opened. Figures created through the pyplot interface (`matplotlib.pyplot.figure`) are retained until explicitly closed and may consume too much memory. (To control this warning, see the rcParam `figure.max_open_warning`).
+  figsize=(18, 4), subplot_kw=dict(projection=projection))
+readv_it.py:1062: RuntimeWarning: More than 20 figures have been opened. Figures created through the pyplot interface (`matplotlib.pyplot.figure`) are retained until explicitly closed and may consume too much memory. (To control this warning, see the rcParam `figure.max_open_warning`).
+  fig, ax = plt.subplots(1, 1, figsize=(6, 6))
+---------------
+glac1d_l96C_ump4_lm7 run number 0
+number of datapoints =  (1912, 8)
+model built, time= 0.24668025970458984
+model minimized, time= 17722.64157485962
+time elapsed =  18045.749785900116
+negative log marginal likelihood = -1327.8417705055276
+Filename: readv_it.py
+
+Line #    Mem usage    Increment   Line Contents
+================================================
+    41    311.7 MiB    311.7 MiB   @profile
+    42                             
+    43                             def readv():
+    44                             
+    45                                 # set the colormap and centre the colorbar
+    46    311.7 MiB      0.0 MiB       class MidpointNormalize(Normalize):
+    47    311.7 MiB      0.0 MiB           """Normalise the colorbar.  e.g. norm=MidpointNormalize(mymin, mymax, 0.)"""
+    48   1690.0 MiB      0.2 MiB           def __init__(self, vmin=None, vmax=None, midpoint=None, clip=False):
+    49   1690.0 MiB      0.0 MiB               self.midpoint = midpoint
+    50   1690.0 MiB      0.0 MiB               Normalize.__init__(self, vmin, vmax, clip)
+    51                             
+    52   1705.2 MiB     14.8 MiB           def __call__(self, value, clip=None):
+    53   1705.2 MiB      0.0 MiB               x, y = [self.vmin, self.midpoint, self.vmax], [0, 0.5, 1]
+    54   1705.2 MiB      0.0 MiB               return np.ma.masked_array(np.interp(value, x, y), np.isnan(value))
+    55                             
+    56                             
+    57                                 ####################  Initialize parameters #######################
+    58                                 #################### ---------------------- #######################
+    59                             
+    60    311.7 MiB      0.0 MiB       parser = argparse.ArgumentParser(description='import vars via c-line')
+    61    311.7 MiB      0.0 MiB       parser.add_argument("--mod", default='d6g_h6g_')
+    62    311.7 MiB      0.0 MiB       parser.add_argument("--lith", default='l71C')
+    63    311.7 MiB      0.0 MiB       parser.add_argument("--um", default="p2")
+    64    311.7 MiB      0.0 MiB       parser.add_argument("--lm", default="3")
+    65    311.7 MiB      0.0 MiB       parser.add_argument("--tmax", default="4010")
+    66    311.7 MiB      0.0 MiB       parser.add_argument("--tmin", default="2990")
+    67                             
+    68    311.7 MiB      0.0 MiB       args = parser.parse_args()
+    69    311.7 MiB      0.0 MiB       ice_models = [args.mod]
+    70    311.7 MiB      0.0 MiB       lith_thicknesses = [args.lith]
+    71    311.7 MiB      0.0 MiB       um = args.um
+    72    311.7 MiB      0.0 MiB       lm = args.lm
+    73    311.7 MiB      0.0 MiB       tmax = int(args.tmax)
+    74    311.7 MiB      0.0 MiB       tmin = int(args.tmin)
+    75                             
+    76                                 #ice_models = ['d6g_h6g_']# , 'glac1d_']
+    77                                 #lith_thicknesses = ['l96C']# , 'l71C']
+    78                             
+    79   1754.3 MiB      0.0 MiB       for i, ice_model in enumerate(ice_models):
+    80   1754.3 MiB      0.0 MiB           for k, lith_thickness in enumerate(lith_thicknesses):
+    81    311.7 MiB      0.0 MiB               plotting = 'true'
+    82    311.7 MiB      0.0 MiB               decomp = 'false'
+    83    311.7 MiB      0.0 MiB               ice_model = ice_model # 'd6g_h6g_' # 'glac1d_' #   #
+    84    311.7 MiB      0.0 MiB               lith_thickness = lith_thickness # 'l96'  # 'l90C'
+    85    311.7 MiB      0.0 MiB               model = ice_model + lith_thickness
+    86    311.7 MiB      0.0 MiB               place = 'fennoscandia'
+    87    311.7 MiB      0.0 MiB               mantle = f'um{um}_lm{lm}'
+    88                             
+    89                                         locs = {
+    90    311.7 MiB      0.0 MiB                   'england': [-12, 2, 50, 60],
+    91    311.7 MiB      0.0 MiB                   'easternhem': [50, 178, -45, 80],
+    92    311.7 MiB      0.0 MiB                   'westernhem': [-175, 30, -80, 75],
+    93    311.7 MiB      0.0 MiB                   'world': [-179.8, 179.8, -89.8, 89.8],
+    94    311.7 MiB      0.0 MiB                   'namerica': [-150, -20, 10, 75],
+    95    311.7 MiB      0.0 MiB                   'eastcoast': [-88, -65, 15, 40],
+    96    311.7 MiB      0.0 MiB                   'europe': [-20, 15, 35, 70],
+    97    311.7 MiB      0.0 MiB                   'atlantic':[-85,10, 25, 60],
+    98    311.7 MiB      0.0 MiB                   'fennoscandia': [-15, 50, 45, 73],
+    99                                         }
+   100    311.7 MiB      0.0 MiB               extent = locs[place]
+   101    311.7 MiB      0.0 MiB               tmax, tmin, tstep = tmax, tmin, 100
+   102                             
+   103    311.7 MiB      0.0 MiB               ages_lgm = np.arange(100, 26000, tstep)[::-1]
+   104                             
+   105                                         #import khan dataset
+   106    311.7 MiB      0.0 MiB               path = 'data/GSL_LGM_120519_.csv'
+   107                             
+   108    332.9 MiB     21.2 MiB               df = pd.read_csv(path, encoding="ISO-8859-15", engine='python')
+   109    338.0 MiB      5.0 MiB               df = df.replace('\s+', '_', regex=True).replace('-', '_', regex=True).\
+   110    339.5 MiB      0.2 MiB                       applymap(lambda s:s.lower() if type(s) == str else s)
+   111    339.5 MiB      0.0 MiB               df.columns = df.columns.str.lower()
+   112    339.5 MiB      0.0 MiB               df.rename_axis('index', inplace=True)
+   113    333.4 MiB      0.0 MiB               df = df.rename({'latitude': 'lat', 'longitude': 'lon'}, axis='columns')
+   114    333.4 MiB      0.0 MiB               dfind, dfterr, dfmar = df[(df.type == 0)
+   115    333.5 MiB      0.1 MiB                                         & (df.age > 0)], df[df.type == 1], df[df.type == -1]
+   116    333.5 MiB      0.0 MiB               np.sort(list(set(dfind.regionname1)))
+   117                             
+   118                                         #select location
+   119    333.5 MiB      0.0 MiB               df_place = dfind[(dfind.age > tmin) & (dfind.age < tmax) &
+   120                                                          (dfind.lon > extent[0])
+   121                                                          & (dfind.lon < extent[1])
+   122                                                          & (dfind.lat > extent[2])
+   123    333.7 MiB      0.2 MiB                                & (dfind.lat < extent[3])][[
+   124    334.0 MiB      0.3 MiB                                    'lat', 'lon', 'rsl', 'rsl_er_max', 'age'
+   125                                                          ]]
+   126    334.0 MiB      0.0 MiB               df_place.shape
+   127                             
+   128                                         ####################  	Plot locations  	#######################
+   129                                         #################### ---------------------- #######################
+   130                             
+   131                                         #get counts by location rounded to nearest 0.1 degree
+   132    334.0 MiB      0.0 MiB               if plotting == 'true':
+   133    334.0 MiB      0.0 MiB                   df_rnd = df_place.copy()
+   134    334.0 MiB      0.0 MiB                   df_rnd.lat = np.round(df_rnd.lat, 1)
+   135    334.0 MiB      0.0 MiB                   df_rnd.lon = np.round(df_rnd.lon, 1)
+   136    334.0 MiB      0.0 MiB                   dfcounts_place = df_rnd.groupby(
+   137    334.1 MiB      0.1 MiB                       ['lat', 'lon']).count().reset_index()[['lat', 'lon', 'rsl', 'age']]
+   138                             
+   139                                             #plot
+   140    334.2 MiB      0.1 MiB                   fig = plt.figure(figsize=(10, 7))
+   141    334.3 MiB      0.1 MiB                   ax = plt.subplot(1, 1, 1, projection=ccrs.PlateCarree())
+   142                             
+   143    334.4 MiB      0.2 MiB                   ax.set_extent(extent)
+   144    334.6 MiB      0.1 MiB                   ax.coastlines(resolution='110m', linewidth=1, zorder=2)
+   145    334.6 MiB      0.0 MiB                   ax.add_feature(cfeature.OCEAN, zorder=0)
+   146    334.6 MiB      0.0 MiB                   ax.add_feature(cfeature.LAND, color='palegreen', zorder=1)
+   147    334.6 MiB      0.0 MiB                   ax.add_feature(cfeature.BORDERS, linewidth=0.5, zorder=3)
+   148    334.6 MiB      0.0 MiB                   ax.gridlines(linewidth=1, color='white', alpha=0.5, zorder=4)
+   149    334.6 MiB      0.0 MiB                   scat = ax.scatter(dfcounts_place.lon,
+   150    334.6 MiB      0.0 MiB                                     dfcounts_place.lat,
+   151    334.6 MiB      0.0 MiB                                     s=dfcounts_place.rsl * 70,
+   152    334.6 MiB      0.0 MiB                                     c='lightsalmon',
+   153    334.6 MiB      0.0 MiB                                     vmin=-20,
+   154    334.6 MiB      0.0 MiB                                     vmax=20,
+   155    334.6 MiB      0.0 MiB                                     cmap='coolwarm',
+   156    334.6 MiB      0.0 MiB                                     edgecolor='k',
+   157    334.6 MiB      0.0 MiB                                     linewidths=1,
+   158    334.6 MiB      0.0 MiB                                     transform=ccrs.PlateCarree(),
+   159    334.8 MiB      0.2 MiB                                     zorder=5)
+   160    334.8 MiB      0.0 MiB                   size = Line2D(range(4),
+   161    334.8 MiB      0.0 MiB                                 range(4),
+   162    334.8 MiB      0.0 MiB                                 color="black",
+   163    334.8 MiB      0.0 MiB                                 marker='o',
+   164    334.8 MiB      0.0 MiB                                 linewidth=0,
+   165    334.8 MiB      0.0 MiB                                 linestyle='none',
+   166    334.8 MiB      0.0 MiB                                 markersize=16,
+   167    334.8 MiB      0.0 MiB                                 markerfacecolor="lightsalmon")
+   168    334.8 MiB      0.0 MiB                   labels = ['RSL datapoint location']
+   169    334.8 MiB      0.0 MiB                   leg = plt.legend([size],
+   170    334.8 MiB      0.0 MiB                                    labels,
+   171    334.8 MiB      0.0 MiB                                    loc='lower left',
+   172    334.8 MiB      0.0 MiB                                    bbox_to_anchor=(0.00, 0.00),
+   173    334.8 MiB      0.0 MiB                                    prop={'size': 20},
+   174    334.8 MiB      0.0 MiB                                    fancybox=True)
+   175    334.8 MiB      0.0 MiB                   leg.get_frame().set_edgecolor('k')
+   176    334.8 MiB      0.0 MiB                   ax.set_title('')
+   177                             
+   178                                         ####################  Make 3D fingerprint  #######################
+   179                                         #################### ---------------------- #######################
+   180                             
+   181    334.8 MiB      0.0 MiB               filename = 'data/WAISreadvance_VM5_6ka_1step.mat'
+   182                             
+   183    339.4 MiB      4.6 MiB               waismask = io.loadmat(filename, squeeze_me=True)
+   184    339.4 MiB      0.0 MiB               ds_mask = xr.Dataset({'rsl': (['lat', 'lon', 'age'], waismask['RSL'])},
+   185                                                              coords={
+   186    339.4 MiB      0.0 MiB                                        'lon': waismask['lon_out'],
+   187    339.4 MiB      0.0 MiB                                        'lat': waismask['lat_out'],
+   188    339.4 MiB      0.0 MiB                                        'age': np.round(waismask['ice_time_new'])
+   189                                                              })
+   190    339.4 MiB      0.0 MiB               fingerprint = ds_mask.sel(age=ds_mask.age[0])
+   191                             
+   192                             
+   193    339.4 MiB      0.0 MiB               def make_fingerprint(start, end, maxscale):
+   194                             
+   195                                             #palindromic scaling vector
+   196    339.4 MiB      0.0 MiB                   def palindrome(maxscale, ages):
+   197                                                 """ Make palindrome scale 0-maxval with number of steps. """
+   198    339.4 MiB      0.0 MiB                       half = np.linspace(0, maxscale, 1 + (len(ages) - 1) // 2)
+   199    339.4 MiB      0.0 MiB                       scalefactor = np.concatenate([half, half[::-1]])
+   200    339.4 MiB      0.0 MiB                       return scalefactor
+   201                             
+   202    339.4 MiB      0.0 MiB                   ages_readv = ages_lgm[(ages_lgm < start) & (ages_lgm >= end)]
+   203    339.4 MiB      0.0 MiB                   scale = palindrome(maxscale, ages_readv)
+   204                             
+   205                                             #scale factor same size as ice model ages
+   206    339.4 MiB      0.0 MiB                   pre = np.zeros(np.where(ages_lgm == start)[0])
+   207    339.4 MiB      0.0 MiB                   post = np.zeros(len(ages_lgm) - len(pre) - len(scale))
+   208                             
+   209    339.4 MiB      0.0 MiB                   readv_scale = np.concatenate([pre, scale, post])
+   210                             
+   211                                             #scale factor into dataarray
+   212    339.4 MiB      0.0 MiB                   da_scale = xr.DataArray(readv_scale, coords=[('age', ages_lgm)])
+   213                             
+   214                                             # broadcast fingerprint & scale to same dimensions;
+   215    339.4 MiB      0.0 MiB                   fingerprint_out, fing_scaled = xr.broadcast(fingerprint.rsl, da_scale)
+   216                             
+   217                                             # mask fingerprint with scale to get LGM-pres timeseries
+   218    339.4 MiB      0.0 MiB                   ds_fingerprint = (fingerprint_out *
+   219    598.4 MiB    258.9 MiB                                     fing_scaled).transpose().to_dataset(name='rsl')
+   220                             
+   221                                             # scale dataset with fingerprint to LGM-present length & 0-max-0 over x years
+   222    598.4 MiB      0.0 MiB                   xrlist = []
+   223    855.4 MiB      0.0 MiB                   for i, key in enumerate(da_scale):
+   224    855.4 MiB      1.0 MiB                       mask = ds_fingerprint.sel(age=ds_fingerprint.age[i].values) * key
+   225    855.4 MiB      0.2 MiB                       mask = mask.assign_coords(scale=key,
+   226    855.4 MiB      0.0 MiB                                                 age=ages_lgm[i]).expand_dims(dim=['age'])
+   227    855.4 MiB      0.0 MiB                       xrlist.append(mask)
+   228   1114.6 MiB    259.3 MiB                   ds_readv = xr.concat(xrlist, dim='age')
+   229                             
+   230   1114.6 MiB      0.0 MiB                   ds_readv.coords['lon'] = pd.DataFrame((ds_readv.lon[ds_readv.lon >= 180] - 360)- 0.12) \
+   231   1114.7 MiB      0.0 MiB                                           .append(pd.DataFrame(ds_readv.lon[ds_readv.lon < 180]) + 0.58) \
+   232   1114.7 MiB      0.0 MiB                                           .reset_index(drop=True).squeeze()
+   233   1114.7 MiB      0.0 MiB                   ds_readv = ds_readv.swap_dims({'dim_0': 'lon'}).drop('dim_0')
+   234                             
+   235                                             # Add readv to modeled RSL at locations with data
+   236                                             ##### Need to fix this, as currently slice does not acknowledge new coords #########
+   237   1114.7 MiB      0.0 MiB                   ds_readv = ds_readv.sel(age=slice(tmax, tmin),
+   238   1114.7 MiB      0.0 MiB                                           lon=slice(df_place.lon.min() + 180 - 2,
+   239   1114.7 MiB      0.0 MiB                                                     df_place.lon.max() + 180 + 2),
+   240   1114.7 MiB      0.0 MiB                                           lat=slice(df_place.lat.max() + 2,
+   241   1114.7 MiB      0.0 MiB                                                     df_place.lat.min() - 2))
+   242   1114.7 MiB      0.0 MiB                   return ds_readv
+   243                             
+   244                             
+   245                                         #Make deterministic readvance fingerprint
+   246    339.4 MiB      0.0 MiB               start, end = 6100, 3000
+   247    339.4 MiB      0.0 MiB               maxscale = 2.25
+   248    597.8 MiB      0.0 MiB               ds_readv = make_fingerprint(start, end, maxscale)
+   249                             
+   250                             
+   251                                         ####################  Build  GIA models 	#######################
+   252                                         #################### ---------------------- #######################
+   253                             
+   254                                         #Use either glac1d or ICE6G
+   255                             
+   256                             
+   257    985.4 MiB      0.0 MiB               def build_dataset(path, model):
+   258                                             """download model runs from local directory."""
+   259    985.4 MiB      0.0 MiB                   path = path
+   260    985.4 MiB      0.0 MiB                   files = f'{path}*.nc'
+   261    985.4 MiB      0.0 MiB                   basefiles = glob.glob(files)
+   262                                             modelrun = [
+   263    985.4 MiB      0.0 MiB                       key.split('output_', 1)[1][:-3].replace('.', '_')
+   264    985.4 MiB      0.0 MiB                       for key in basefiles
+   265                                             ]
+   266    985.4 MiB      0.0 MiB                   dss = xr.open_mfdataset(files,
+   267    985.4 MiB      0.0 MiB                                           chunks=None,
+   268    985.4 MiB      0.0 MiB                                           concat_dim='modelrun',
+   269    985.6 MiB     38.3 MiB                                           combine='nested')
+   270    985.6 MiB      2.3 MiB                   lats, lons, times = dss.LAT.values[0], dss.LON.values[
+   271    985.6 MiB      0.8 MiB                       0], dss.TIME.values[0]
+   272    985.6 MiB      0.0 MiB                   ds = dss.drop(['LAT', 'LON', 'TIME'])
+   273    985.6 MiB      0.0 MiB                   ds = ds.assign_coords(lat=lats,
+   274    985.6 MiB      0.0 MiB                                         lon=lons,
+   275    985.6 MiB      0.0 MiB                                         time=times,
+   276    985.6 MiB      0.0 MiB                                         modelrun=modelrun).rename({
+   277    985.6 MiB      0.0 MiB                                             'time': 'age',
+   278    985.6 MiB      0.0 MiB                                             'RSL': 'rsl'
+   279                                                                   })
+   280    985.6 MiB      0.0 MiB                   return ds
+   281                             
+   282    985.4 MiB      0.0 MiB               def one_mod(path, names):
+   283                                             """Organize model runs into xarray dataset."""
+   284    985.6 MiB      0.0 MiB                   ds1 = build_dataset(path, names[0])
+   285    985.6 MiB      0.0 MiB                   names = names[1:]
+   286    997.6 MiB     17.1 MiB                   ds = ds1.chunk({'lat': 10, 'lon': 10})
+   287    997.6 MiB      0.0 MiB                   for i in range(len(names)):
+   288                                                 temp = build_dataset(names[i])
+   289                                                 temp1 = temp.interp_like(ds1)
+   290                                                 temp1['modelrun'] = temp['modelrun']
+   291                                                 ds = xr.concat([ds, temp1], dim='modelrun')
+   292    997.6 MiB      0.0 MiB                   ds['age'] = ds['age'] * 1000
+   293   1090.0 MiB    111.1 MiB                   ds = ds.roll(lon=256, roll_coords=True)
+   294   1090.1 MiB      0.2 MiB                   ds.coords['lon'] = pd.DataFrame((ds.lon[ds.lon >= 180] - 360)- 0.12 ) \
+   295   1090.1 MiB      0.0 MiB                                           .append(pd.DataFrame(ds.lon[ds.lon < 180]) + 0.58) \
+   296   1090.1 MiB      0.0 MiB                                           .reset_index(drop=True).squeeze()
+   297   1090.1 MiB      0.0 MiB                   ds.coords['lat'] = ds.lat[::-1]
+   298   1090.1 MiB      0.0 MiB                   ds = ds.swap_dims({'dim_0': 'lon'}).drop('dim_0')
+   299   1090.1 MiB      0.0 MiB                   return ds
+   300                             
+   301                                         #make composite of a bunch of GIA runs, i.e. GIA prior
+   302                             
+   303    597.8 MiB      0.0 MiB               if ice_model == 'glac1d_':
+   304    597.8 MiB      0.0 MiB                   path = f'data/glac1d_/output_{model}'
+   305                             
+   306                                             #make composite of a bunch of GIA runs, i.e. GIA prior
+   307    767.6 MiB      0.0 MiB                   ds = one_mod(path, [model])
+   308    767.6 MiB      0.0 MiB                   ds_sliced = ds.rsl.sel(age=slice(tmax, tmin),
+   309    767.6 MiB      0.0 MiB                                          lon=slice(df_place.lon.min() - 2,
+   310    767.6 MiB      0.0 MiB                                                    df_place.lon.max() + 2),
+   311    767.6 MiB      0.0 MiB                                          lat=slice(df_place.lat.min() - 2,
+   312    767.7 MiB      0.1 MiB                                                    df_place.lat.max() + 2))
+   313                             
+   314                                         elif ice_model == 'd6g_h6g_':
+   315                                             path = f'data/d6g_h6g_/output_{model}'
+   316                             
+   317                                             #make GIA prior std.
+   318                                             ds = one_mod(path, [model])
+   319                                             ds_sliced = ds.rsl.sel(age=slice(tmax, tmin),
+   320                                                                    lon=slice(df_place.lon.min() - 2,
+   321                                                                              df_place.lon.max() + 2),
+   322                                                                    lat=slice(df_place.lat.min() - 2,
+   323                                                                              df_place.lat.max() + 2))
+   324                             
+   325    936.5 MiB    168.7 MiB               ds_areastd = ds_sliced.std(dim='modelrun').load().to_dataset().interp(
+   326    985.4 MiB     48.9 MiB                   age=ds_readv.age, lon=ds_readv.lon, lat=ds_readv.lat)
+   327                             
+   328                                         # loop through all models to calculate GPR log likelihood
+   329                                         # runs = ds.modelrun.values.tolist()
+   330    985.4 MiB      0.0 MiB               runs = [f'{ice_model}{lith_thickness}_um{um}_lm{lm}']
+   331                             
+   332    985.4 MiB      0.0 MiB               modrunlist = []
+   333    985.4 MiB      0.0 MiB               loglikelist = []
+   334   1752.1 MiB      0.0 MiB               for i, modelrun in enumerate(runs):
+   335                             
+   336    985.4 MiB      0.0 MiB                   print('---------------')
+   337    985.4 MiB      0.0 MiB                   print(f'{modelrun} run number {i}')
+   338                             
+   339    985.4 MiB      0.0 MiB                   if ice_model == 'glac1d_':
+   340                                                 # make prior RSL
+   341    985.4 MiB      0.0 MiB                       ds_area = one_mod(path,
+   342   1090.4 MiB      0.2 MiB                           [ice_model + lith_thickness]).sel(modelrun=modelrun).rsl.sel(
+   343   1090.4 MiB      0.0 MiB                               age=slice(tmax, tmin),
+   344   1090.4 MiB      0.0 MiB                               lon=slice(df_place.lon.min() - 2,
+   345   1090.4 MiB      0.0 MiB                                         df_place.lon.max() + 2),
+   346   1090.4 MiB      0.0 MiB                               lat=slice(df_place.lat.min() - 2,
+   347   1000.7 MiB      0.0 MiB                                         df_place.lat.max() + 2)).load().to_dataset().interp(
+   348   1000.7 MiB      0.0 MiB                                             age=ds_readv.age, lon=ds_readv.lon, lat=ds_readv.lat)
+   349                             
+   350                                             else:
+   351                                                 # make prior RSL
+   352                                                 ds_area = one_mod(path,
+   353                                                     [ice_model + lith_thickness]).sel(modelrun=modelrun).rsl.sel(
+   354                                                         age=slice(tmax, tmin),
+   355                                                         lon=slice(df_place.lon.min() - 2,
+   356                                                                   df_place.lon.max() + 2),
+   357                                                         lat=slice(df_place.lat.min() - 2,
+   358                                                                   df_place.lat.max() + 2)).load().to_dataset().interp(
+   359                                                                       age=ds_readv.age, lon=ds_readv.lon, lat=ds_readv.lat)
+   360                             
+   361                             
+   362                                             #sample each model at points where we have RSL data
+   363   1000.7 MiB      0.0 MiB                   def ds_select(ds):
+   364   1000.7 MiB      0.0 MiB                       return ds.rsl.sel(age=[row.age],
+   365   1000.7 MiB      0.0 MiB                                         lon=[row.lon],
+   366   1000.7 MiB      0.0 MiB                                         lat=[row.lat],
+   367   1000.7 MiB      0.0 MiB                                         method='nearest').squeeze().values
+   368                             
+   369                                             #select points at which RSL data exists
+   370   1000.7 MiB      0.0 MiB                   for i, row in df_place.iterrows():
+   371   1000.7 MiB      0.0 MiB                       df_place.loc[i, 'rsl_realresid'] = df_place.rsl[i] - ds_select(ds_area)
+   372   1000.7 MiB      0.0 MiB                       df_place.loc[i, 'rsl_giaprior'] = ds_select(ds_area)
+   373   1000.7 MiB      0.0 MiB                       df_place.loc[i, 'rsl_giaprior_std'] = ds_select(ds_areastd)
+   374                             
+   375   1000.7 MiB      0.0 MiB                   print('number of datapoints = ', df_place.shape)
+   376                             
+   377                                             ##################	  RUN GP REGRESSION 	#######################
+   378                                             ##################  --------------------	 ######################
+   379   1000.7 MiB      0.0 MiB                   start = time.time()
+   380                             
+   381   1000.7 MiB      0.0 MiB                   def run_gpr():
+   382                             
+   383   1000.7 MiB      0.0 MiB                       Data = Tuple[tf.Tensor, tf.Tensor]
+   384   1000.7 MiB      0.0 MiB                       likelihood = df_place.rsl_er_max.ravel()**2 # + df_place.rsl_giaprior_std.ravel()**2  # here we define likelihood
+   385                             
+   386   1000.7 MiB      0.0 MiB                       class GPR_diag(gpf.models.GPModel):
+   387                                                     r"""
+   388                                                     Gaussian Process Regression.
+   389                                                     This is a vanilla implementation of GP regression with a pointwise Gaussian
+   390                                                     likelihood.  Multiple columns of Y are treated independently.
+   391                                                     The log likelihood of this models is sometimes referred to as the 'marginal log likelihood',
+   392                                                     and is given by
+   393                                                     .. math::
+   394                                                        \log p(\mathbf y \,|\, \mathbf f) =
+   395                                                             \mathcal N\left(\mathbf y\,|\, 0, \mathbf K + \sigma_n \mathbf I\right)
+   396   1000.7 MiB      0.0 MiB                           """
+   397   1002.9 MiB      0.0 MiB                           def __init__(self,
+   398                                                                  data: Data,
+   399                                                                  kernel: Kernel,
+   400   1000.7 MiB      0.0 MiB                                        mean_function: Optional[MeanFunction] = None,
+   401   1000.7 MiB      0.0 MiB                                        likelihood=likelihood):
+   402   1002.9 MiB      0.0 MiB                               likelihood = gpf.likelihoods.Gaussian(variance=likelihood)
+   403   1002.9 MiB      0.0 MiB                               _, y_data = data
+   404   1002.9 MiB      0.0 MiB                               super().__init__(kernel,
+   405   1002.9 MiB      0.0 MiB                                                likelihood,
+   406   1002.9 MiB      0.0 MiB                                                mean_function,
+   407   1002.9 MiB      0.0 MiB                                                num_latent=y_data.shape[-1])
+   408   1002.9 MiB      0.0 MiB                               self.data = data
+   409                             
+   410   1556.6 MiB      0.0 MiB                           def log_likelihood(self):
+   411                                                         """
+   412                                                         Computes the log likelihood.
+   413                                                         """
+   414   1556.6 MiB      0.0 MiB                               x, y = self.data
+   415   1528.8 MiB      0.0 MiB                               K = self.kernel(x)
+   416   1528.8 MiB      0.0 MiB                               num_data = x.shape[0]
+   417   1528.8 MiB      0.0 MiB                               k_diag = tf.linalg.diag_part(K)
+   418   1528.8 MiB      0.1 MiB                               s_diag = tf.convert_to_tensor(self.likelihood.variance)
+   419   1528.8 MiB      0.0 MiB                               jitter = tf.cast(tf.fill([num_data], default_jitter()),
+   420   1528.8 MiB      0.0 MiB                                                'float64')  # stabilize K matrix w/jitter
+   421   1528.8 MiB      0.0 MiB                               ks = tf.linalg.set_diag(K, k_diag + s_diag + jitter)
+   422   1584.3 MiB     55.5 MiB                               L = tf.linalg.cholesky(ks)
+   423   1584.3 MiB      0.0 MiB                               m = self.mean_function(x)
+   424                             
+   425                                                         # [R,] log-likelihoods for each independent dimension of Y
+   426   1584.3 MiB      0.0 MiB                               log_prob = multivariate_normal(y, m, L)
+   427   1584.3 MiB      0.0 MiB                               return tf.reduce_sum(log_prob)
+   428                             
+   429   1249.7 MiB      0.0 MiB                           def predict_f(self,
+   430                                                                   predict_at: tf.Tensor,
+   431                                                                   full_cov: bool = False,
+   432   1000.7 MiB      0.0 MiB                                         full_output_cov: bool = False):
+   433                                                         r"""
+   434                                                         This method computes predictions at X \in R^{N \x D} input points
+   435                                                         .. math::
+   436                                                             p(F* | Y)
+   437                                                         where F* are points on the GP at new data points, Y are noisy observations at training data points.
+   438                                                         """
+   439   1249.7 MiB      0.0 MiB                               x_data, y_data = self.data
+   440   1249.7 MiB      0.0 MiB                               err = y_data - self.mean_function(x_data)
+   441                             
+   442   1556.5 MiB    111.6 MiB                               kmm = self.kernel(x_data)
+   443   1556.5 MiB      0.0 MiB                               knn = self.kernel(predict_at, full=full_cov)
+   444   5422.2 MiB      0.0 MiB                               kmn = self.kernel(x_data, predict_at)
+   445                             
+   446   5422.2 MiB      0.0 MiB                               num_data = x_data.shape[0]
+   447   5422.2 MiB      0.0 MiB                               s = tf.linalg.diag(tf.convert_to_tensor(
+   448   5422.2 MiB      0.0 MiB                                   self.likelihood.variance))  #changed from normal GPR
+   449                             
+   450   5422.2 MiB      0.0 MiB                               conditional = gpf.conditionals.base_conditional
+   451   5422.2 MiB      0.0 MiB                               f_mean_zero, f_var = conditional(
+   452   5422.2 MiB      0.0 MiB                                   kmn, kmm + s, knn, err, full_cov=full_cov,
+   453   5422.3 MiB      0.1 MiB                                   white=False)  # [N, P], [N, P] or [P, N, N]
+   454   5422.3 MiB      0.0 MiB                               f_mean = f_mean_zero + self.mean_function(predict_at)
+   455   5422.3 MiB      0.0 MiB                               return f_mean, f_var
+   456                             
+   457                             
+   458   1000.7 MiB      0.0 MiB                       def normalize(df):
+   459   1000.7 MiB      0.0 MiB                           return np.array((df - df.mean()) / df.std()).reshape(len(df), 1)
+   460                             
+   461                             
+   462   1556.6 MiB      0.0 MiB                       def denormalize(y_pred, df):
+   463   1556.6 MiB      0.0 MiB                           return np.array((y_pred * df.std()) + df.mean())
+   464                             
+   465                             
+   466   1002.9 MiB      0.0 MiB                       def bounded_parameter(low, high, param):
+   467                                                     """Make parameter tfp Parameter with optimization bounds."""
+   468   1002.9 MiB      0.0 MiB                           affine = tfb.AffineScalar(shift=tf.cast(low, tf.float64),
+   469   1002.9 MiB      0.0 MiB                                                     scale=tf.cast(high - low, tf.float64))
+   470   1002.9 MiB      0.0 MiB                           sigmoid = tfb.Sigmoid()
+   471   1002.9 MiB      0.0 MiB                           logistic = tfb.Chain([affine, sigmoid])
+   472   1002.9 MiB      0.0 MiB                           parameter = gpf.Parameter(param, transform=logistic, dtype=tf.float64)
+   473   1002.9 MiB      0.0 MiB                           return parameter
+   474                             
+   475                             
+   476   1000.7 MiB      0.0 MiB                       class HaversineKernel_Matern52(gpf.kernels.Matern52):
+   477                                                     """
+   478                                                     Isotropic Matern52 Kernel with Haversine distance instead of euclidean distance.
+   479                                                     Assumes n dimensional data, with columns [latitude, longitude] in degrees.
+   480   1000.7 MiB      0.0 MiB                           """
+   481                                                     def __init__(
+   482                                                         self,
+   483                                                         lengthscale=1.0,
+   484                                                         variance=1.0,
+   485   1000.7 MiB      0.0 MiB                               active_dims=None,
+   486                                                     ):
+   487                                                         super().__init__(
+   488                                                             active_dims=active_dims,
+   489                                                             variance=variance,
+   490                                                             lengthscale=lengthscale,
+   491                                                         )
+   492                             
+   493   1000.7 MiB      0.0 MiB                           def haversine_dist(self, X, X2):
+   494                                                         pi = np.pi / 180
+   495                                                         f = tf.expand_dims(X * pi, -2)  # ... x N x 1 x D
+   496                                                         f2 = tf.expand_dims(X2 * pi, -3)  # ... x 1 x M x D
+   497                                                         d = tf.sin((f - f2) / 2)**2
+   498                                                         lat1, lat2 = tf.expand_dims(X[:, 0] * pi, -1), \
+   499                                                                     tf.expand_dims(X2[:, 0] * pi, -2)
+   500                                                         cos_prod = tf.cos(lat2) * tf.cos(lat1)
+   501                                                         a = d[:, :, 0] + cos_prod * d[:, :, 1]
+   502                                                         c = tf.asin(tf.sqrt(a)) * 6371 * 2
+   503                                                         return c
+   504                             
+   505   1000.7 MiB      0.0 MiB                           def scaled_squared_euclid_dist(self, X, X2):
+   506                                                         """
+   507                                                         Returns (dist(X, X2ᵀ)/lengthscales)².
+   508                                                         """
+   509                                                         if X2 is None:
+   510                                                             X2 = X
+   511                                                         dist = da.square(self.haversine_dist(X, X2) / self.lengthscale)
+   512                                                 #             dist = tf.convert_to_tensor(dist)
+   513                                                         return dist
+   514                             
+   515                             
+   516   1000.7 MiB      0.0 MiB                       class HaversineKernel_Matern32(gpf.kernels.Matern32):
+   517                                                     """
+   518                                                     Isotropic Matern52 Kernel with Haversine distance instead of euclidean distance.
+   519                                                     Assumes n dimensional data, with columns [latitude, longitude] in degrees.
+   520   1000.7 MiB      0.0 MiB                           """
+   521   1002.9 MiB      0.0 MiB                           def __init__(
+   522                                                         self,
+   523                                                         lengthscale=1.0,
+   524                                                         variance=1.0,
+   525   1000.7 MiB      0.0 MiB                               active_dims=None,
+   526                                                     ):
+   527   1002.9 MiB      0.0 MiB                               super().__init__(
+   528   1002.9 MiB      0.0 MiB                                   active_dims=active_dims,
+   529   1002.9 MiB      0.0 MiB                                   variance=variance,
+   530   1002.9 MiB      2.1 MiB                                   lengthscale=lengthscale,
+   531                                                         )
+   532                             
+   533   5422.2 MiB      0.0 MiB                           def haversine_dist(self, X, X2):
+   534   5422.2 MiB      0.0 MiB                               pi = np.pi / 180
+   535   5422.2 MiB      0.0 MiB                               f = tf.expand_dims(X * pi, -2)  # ... x N x 1 x D
+   536   5422.2 MiB      0.0 MiB                               f2 = tf.expand_dims(X2 * pi, -3)  # ... x 1 x M x D
+   537  13153.5 MiB   7731.3 MiB                               d = tf.sin((f - f2) / 2)**2
+   538  13153.5 MiB      0.0 MiB                               lat1, lat2 = tf.expand_dims(X[:, 0] * pi, -1), \
+   539  13153.5 MiB      0.0 MiB                                           tf.expand_dims(X2[:, 0] * pi, -2)
+   540  17019.0 MiB   3865.6 MiB                               cos_prod = tf.cos(lat2) * tf.cos(lat1)
+   541  20884.8 MiB   3865.8 MiB                               a = d[:, :, 0] + cos_prod * d[:, :, 1]
+   542  24750.5 MiB   3865.7 MiB                               c = tf.asin(tf.sqrt(a)) * 6371 * 2
+   543  24750.5 MiB      0.0 MiB                               return c
+   544                             
+   545   5422.2 MiB     84.0 MiB                           def scaled_squared_euclid_dist(self, X, X2):
+   546                                                         """
+   547                                                         Returns (dist(X, X2ᵀ)/lengthscales)².
+   548                                                         """
+   549   5422.2 MiB      0.0 MiB                               if X2 is None:
+   550   1584.5 MiB      0.0 MiB                                   X2 = X
+   551   9287.8 MiB      0.0 MiB                               dist = tf.square(self.haversine_dist(X, X2) / self.lengthscale)
+   552                                                 #             dist = tf.convert_to_tensor(dist) # return to tensorflow
+   553   9287.8 MiB      0.0 MiB                               return dist
+   554                             
+   555                             
+   556                                                 ########### Section to Run GPR######################
+   557                                                 ##################################3#################
+   558                             
+   559                                                 # Input space, rsl normalized to zero mean, unit variance
+   560   1000.7 MiB      0.0 MiB                       X = np.stack((df_place['lon'], df_place['lat'], df_place['age']), 1)
+   561   1000.7 MiB      0.0 MiB                       RSL = normalize(df_place.rsl_realresid)
+   562                             
+   563                                                 #define kernels  with bounds
+   564                             
+   565   1002.8 MiB      0.0 MiB                       k1 = HaversineKernel_Matern32(active_dims=[0, 1])
+   566   1002.9 MiB      0.0 MiB                       k1.lengthscale = bounded_parameter(5000, 30000, 10000)  #hemispheric space
+   567   1002.9 MiB      0.0 MiB                       k1.variance = bounded_parameter(0.1, 100, 2)
+   568                             
+   569                                                 # k1 = gpf.kernels.Matern32(active_dims=[0, 1])
+   570                                                 # k1.lengthscale = bounded_parameter(50, 500, 60)  #hemispheric space
+   571                                                 # k1.variance = bounded_parameter(0.05, 100, 2)
+   572                             
+   573   1002.9 MiB      0.0 MiB                       k2 = HaversineKernel_Matern32(active_dims=[0, 1])
+   574   1002.9 MiB      0.0 MiB                       k2.lengthscale = bounded_parameter(1, 5000, 1000)  #GIA space
+   575   1002.9 MiB      0.0 MiB                       k2.variance = bounded_parameter(0.1, 100, 2)
+   576                             
+   577                                                 # k2 = gpf.kernels.Matern32(active_dims=[0,1])
+   578                                                 # k2.lengthscale = bounded_parameter(1, 50, 5)  #GIA space
+   579                                                 # k2.variance = bounded_parameter(0.05, 100, 2)
+   580                             
+   581   1002.9 MiB      0.0 MiB                       k3 = gpf.kernels.Matern32(active_dims=[2])  #GIA time
+   582   1002.9 MiB      0.0 MiB                       k3.lengthscale = bounded_parameter(8000, 20000, 10000)
+   583   1002.9 MiB      0.0 MiB                       k3.variance = bounded_parameter(0.1, 100, 1)
+   584                             
+   585   1002.9 MiB      0.0 MiB                       k4 = gpf.kernels.Matern32(active_dims=[2])  #shorter time
+   586   1002.9 MiB      0.0 MiB                       k4.lengthscale = bounded_parameter(1, 8000, 1000)
+   587   1002.9 MiB      0.0 MiB                       k4.variance = bounded_parameter(0.1, 100, 1)
+   588                             
+   589   1002.9 MiB      0.0 MiB                       k5 = gpf.kernels.White(active_dims=[2])
+   590   1002.9 MiB      0.0 MiB                       k5.variance = bounded_parameter(0.01, 100, 1)
+   591                             
+   592   1002.9 MiB      0.0 MiB                       kernel = (k1 * k3) + (k2 * k4) + k5
+   593                             
+   594                                                 #build & train model
+   595   1002.9 MiB      0.0 MiB                       m = GPR_diag((X, RSL), kernel=kernel, likelihood=likelihood)
+   596   1002.9 MiB      0.0 MiB                       print('model built, time=', time.time() - start)
+   597                             
+   598                             
+   599   1003.8 MiB      0.9 MiB                       @tf.function(autograph=False)
+   600                                                 def objective():
+   601   1004.0 MiB      0.0 MiB                           return - m.log_marginal_likelihood()
+   602                             
+   603   1002.9 MiB      0.0 MiB                       o = gpf.optimizers.Scipy()
+   604   1249.5 MiB    245.5 MiB                       o.minimize(objective, variables=m.trainable_variables)
+   605   1249.5 MiB      0.0 MiB                       print('model minimized, time=', time.time() - start)
+   606                             
+   607                                                 # output space
+   608   1249.5 MiB      0.0 MiB                       nout = 50
+   609   1249.5 MiB      0.0 MiB                       lat = np.linspace(min(ds_area.lat), max(ds_area.lat), nout)
+   610   1249.5 MiB      0.0 MiB                       lon = np.linspace(min(ds_area.lon), max(ds_area.lon), nout)
+   611   1249.5 MiB      0.0 MiB                       ages = ages_lgm[(ages_lgm < tmax) & (ages_lgm > tmin)]
+   612   1249.7 MiB      0.2 MiB                       xyt = np.array(list(product(lon, lat, ages)))
+   613                             
+   614                                                 #query model & renormalize data
+   615   1556.6 MiB      0.0 MiB                       y_pred, var = m.predict_f(xyt)
+   616   1556.6 MiB      0.0 MiB                       y_pred_out = denormalize(y_pred, df_place.rsl_realresid)
+   617                             
+   618                                                 #reshape output vectors
+   619                             #                    Xlon = np.array(xyt[:, 0]).reshape((nout, nout, len(ages)))
+   620                              #                   Xlat = np.array(xyt[:, 1]).reshape((nout, nout, len(ages)))
+   621   1556.6 MiB      0.0 MiB                       Zp = np.array(y_pred_out).reshape(nout, nout, len(ages))
+   622   1556.6 MiB      0.0 MiB                       varp = np.array(var).reshape(nout, nout, len(ages))
+   623                             
+   624                                                 #print kernel details
+   625                                             #     print_summary(m, fmt='notebook')
+   626   1556.6 MiB      0.0 MiB                       print('time elapsed = ', time.time() - start)
+   627                             
+   628   1556.6 MiB      0.0 MiB                       print('negative log marginal likelihood =',
+   629   1528.8 MiB      0.0 MiB                             m.neg_log_marginal_likelihood().numpy())
+   630                             
+   631                             
+   632   1528.8 MiB      0.0 MiB                       modrunlist.append(modelrun)
+   633   1556.5 MiB      0.0 MiB                       loglikelist.append(m.neg_log_marginal_likelihood().numpy())
+   634                             
+   635                             
+   636                             
+   637                                                 ##################	  INTERPOLATE MODELS 	#######################
+   638                                                 ##################  --------------------	 ######################
+   639                             
+   640                                                 # turn GPR output into xarray dataarray
+   641   1556.5 MiB      0.0 MiB                       da_zp = xr.DataArray(Zp, coords=[lon, lat, ages],
+   642   1556.5 MiB      0.0 MiB                                            dims=['lon', 'lat',
+   643   1556.5 MiB      0.0 MiB                                                  'age']).transpose('age', 'lat', 'lon')
+   644   1556.5 MiB      0.0 MiB                       da_varp = xr.DataArray(varp,
+   645   1556.5 MiB      0.0 MiB                                              coords=[lon, lat, ages],
+   646   1556.5 MiB      0.0 MiB                                              dims=['lon', 'lat',
+   647   1556.5 MiB      0.0 MiB                                                    'age']).transpose('age', 'lat', 'lon')
+   648                             
+   649                             
+   650   1556.6 MiB      0.0 MiB                       def interp_likegpr(ds):
+   651   1556.6 MiB      0.0 MiB                           return ds.rsl.load().transpose().interp_like(da_zp)
+   652                             
+   653                             
+   654                                                 #interpolate all models onto GPR grid
+   655   1556.6 MiB      0.0 MiB                       da_giapriorinterp = interp_likegpr(ds_area)
+   656   1556.6 MiB      0.0 MiB                       ds_giapriorinterp = ds_area.interp(age=ages)
+   657   1556.6 MiB      0.0 MiB                       da_giapriorinterpstd = interp_likegpr(ds_areastd)
+   658                             
+   659                                                 # add total prior RSL back into GPR
+   660   1556.6 MiB      0.0 MiB                       da_priorplusgpr = da_zp + da_giapriorinterp
+   661                             
+   662   1556.6 MiB      0.0 MiB                       return k1, k2, k3, k4, k5, nout, xyt, m, ages, da_zp, ds_giapriorinterp, da_giapriorinterpstd, da_giapriorinterp, da_priorplusgpr, da_varp, modrunlist, loglikelist
+   663                             
+   664   1556.6 MiB      0.0 MiB                   k1, k2, k3, k4, k5, nout, xyt, m, ages, da_zp, ds_giapriorinterp, da_giapriorinterpstd, da_giapriorinterp, da_priorplusgpr, da_varp, modrunlist, loglikelist = run_gpr()
+   665                                             ##################	  	 SAVE NETCDFS 	 	#######################
+   666                                             ##################  --------------------	 ######################
+   667                             
+   668   1556.6 MiB      0.0 MiB                   path_gen = f'{ages[0]}_{ages[-1]}_{model}_{mantle}_{place}'
+   669   1556.9 MiB      0.3 MiB                   da_zp.to_netcdf('output/' + path_gen + '_da_zp')
+   670   1557.0 MiB      0.2 MiB                   da_giapriorinterp.to_netcdf('output/' + path_gen + '_giaprior')
+   671   1557.0 MiB      0.0 MiB                   da_priorplusgpr.to_netcdf('output/' + path_gen + '_posterior')
+   672   1557.0 MiB      0.0 MiB                   da_varp.to_netcdf('output/' + path_gen + '_gp_variance')
+   673                             
+   674                                             ##################		  PLOT  MODELS 		#######################
+   675                                             ##################  --------------------	 ######################
+   676   1557.0 MiB      0.0 MiB                   dirName = f'figs/{place}/'
+   677   1557.0 MiB      0.0 MiB                   if not os.path.exists(dirName):
+   678                                                 os.mkdir(dirName)
+   679                                                 print("Directory ", dirName, " Created ")
+   680                                             else:
+   681                                                 pass
+   682                                     #             print("Directory ", dirName, " already exists")
+   683                             
+   684   1557.0 MiB      0.0 MiB                   if plotting == 'true':
+   685   1705.6 MiB      0.0 MiB                       for i, age in enumerate(ages):
+   686   1688.7 MiB      0.0 MiB                           if (age / 500).is_integer():
+   687   1688.7 MiB      0.0 MiB                               step = (ages[0] - ages[1])
+   688   1688.7 MiB      0.0 MiB                               df_it = df_place[(df_place.age < age) & (df_place.age > age - step)]
+   689   1688.7 MiB      0.0 MiB                               resid_it = da_zp.sel(age=slice(age, age - step))
+   690   1688.7 MiB      0.0 MiB                               rsl, var = df_it.rsl, df_it.rsl_er_max.values**2
+   691   1688.7 MiB      0.0 MiB                               lat_it, lon_it = df_it.lat, df_it.lon
+   692                             
+   693   1688.7 MiB      0.0 MiB                               if ice_model == 'glac1d_':
+   694   1688.7 MiB      0.0 MiB                                   vmin = ds_giapriorinterp.rsl.min().values  + 50
+   695   1688.7 MiB      0.0 MiB                                   vmax = ds_giapriorinterp.rsl.max().values  - 100
+   696                                                         elif ice_model =='d6g_h6g_':
+   697                                                             vmin = ds_giapriorinterp.rsl.min().values  + 20
+   698                                                             vmax = ds_giapriorinterp.rsl.max().values  + 10
+   699                             
+   700   1688.7 MiB      0.0 MiB                               vmin_std = 0
+   701   1688.7 MiB      0.0 MiB                               vmax_std = 1
+   702   1688.7 MiB      0.0 MiB                               tmin_it = np.round(age - step, 2)
+   703   1688.7 MiB      0.0 MiB                               tmax_it = np.round(age, 2)
+   704   1688.7 MiB      0.0 MiB                               cbarscale = 0.3
+   705   1688.7 MiB      0.0 MiB                               fontsize = 20
+   706   1688.7 MiB      0.0 MiB                               cmap = 'coolwarm'
+   707   1688.7 MiB      0.0 MiB                               cbar_kwargs = {'shrink': cbarscale, 'label': 'RSL (m)'}
+   708                             
+   709   1688.7 MiB      0.0 MiB                               proj = ccrs.PlateCarree()
+   710   1688.7 MiB      0.0 MiB                               projection = ccrs.PlateCarree()
+   711                                                         fig, (ax1, ax2, ax3,
+   712   1688.7 MiB      0.0 MiB                                     ax4) = plt.subplots(1,
+   713   1688.7 MiB      0.0 MiB                                                         4,
+   714   1688.7 MiB      0.0 MiB                                                         figsize=(24, 16),
+   715   1689.5 MiB      0.9 MiB                                                         subplot_kw=dict(projection=projection))
+   716                             
+   717                                                         # total prior mean + "true" data
+   718   1689.5 MiB      0.0 MiB                               ax1.coastlines(color='k')
+   719   1689.5 MiB      0.2 MiB                               pc1 = ds_giapriorinterp.rsl[i].transpose().plot(ax=ax1,
+   720   1689.5 MiB      0.0 MiB                                                                               transform=proj,
+   721   1689.5 MiB      0.0 MiB                                                                               cmap=cmap,
+   722   1689.5 MiB      0.2 MiB                                                                               norm=MidpointNormalize(
+   723   1689.5 MiB      0.0 MiB                                                                                   vmin, vmax, 0),
+   724   1689.5 MiB      0.0 MiB                                                                               add_colorbar=False,
+   725   1689.5 MiB      0.2 MiB                                                                               extend='both')
+   726   1689.5 MiB      0.0 MiB                               cbar = fig.colorbar(pc1,
+   727   1689.5 MiB      0.0 MiB                                                   ax=ax1,
+   728   1689.5 MiB      0.0 MiB                                                   shrink=.3,
+   729   1689.5 MiB      0.0 MiB                                                   label='RSL (m)',
+   730   1689.7 MiB      0.2 MiB                                                   extend='both')
+   731   1689.7 MiB      0.0 MiB                               scat = ax1.scatter(lon_it,
+   732   1689.7 MiB      0.0 MiB                                                  lat_it,
+   733   1689.7 MiB      0.0 MiB                                                  s=80,
+   734   1689.7 MiB      0.0 MiB                                                  c=rsl,
+   735   1689.7 MiB      0.0 MiB                                                  edgecolor='k',
+   736   1689.7 MiB      0.0 MiB                                                  vmin=vmin,
+   737   1689.7 MiB      0.0 MiB                                                  vmax=vmax,
+   738   1689.7 MiB      0.0 MiB                                                  norm=MidpointNormalize(vmin, vmax, 0),
+   739   1689.7 MiB      0.1 MiB                                                  cmap=cmap)
+   740   1689.7 MiB      0.0 MiB                               ax1.set_title(f'{np.round(ds_giapriorinterp.rsl[i].age.values, -1)} yrs',
+   741   1689.7 MiB      0.0 MiB                                             fontsize=fontsize)
+   742                                                         #         ax1.set_extent(extent_)
+   743                             
+   744                                                         # Learned difference between prior and "true" data
+   745   1689.7 MiB      0.0 MiB                               ax2.coastlines(color='k')
+   746   1689.7 MiB      0.3 MiB                               pc = da_zp[i, :, :].plot(ax=ax2,
+   747   1689.7 MiB      0.0 MiB                                                        transform=proj,
+   748   1689.7 MiB      0.0 MiB                                                        cmap=cmap,
+   749   1689.7 MiB      0.0 MiB                                                        extend='both',
+   750   1689.7 MiB      0.0 MiB                                                        norm=MidpointNormalize(
+   751   1689.7 MiB      0.0 MiB                                                            resid_it.min(), resid_it.max(), 0),
+   752   1689.7 MiB      0.2 MiB                                                        add_colorbar=False)
+   753   1689.7 MiB      0.0 MiB                               cbar = fig.colorbar(pc,
+   754   1689.7 MiB      0.0 MiB                                                   ax=ax2,
+   755   1689.7 MiB      0.0 MiB                                                   shrink=.3,
+   756   1689.7 MiB      0.0 MiB                                                   label='RSL (m)',
+   757   1690.0 MiB      0.3 MiB                                                   extend='both')
+   758   1690.0 MiB      0.0 MiB                               scat = ax2.scatter(lon_it,
+   759   1690.0 MiB      0.0 MiB                                                  lat_it,
+   760   1690.0 MiB      0.0 MiB                                                  s=80,
+   761   1690.0 MiB      0.0 MiB                                                  facecolors='k',
+   762   1690.0 MiB      0.0 MiB                                                  cmap=cmap,
+   763   1690.0 MiB      0.0 MiB                                                  edgecolor='k',
+   764   1690.0 MiB      0.0 MiB                                                  transform=proj,
+   765   1690.0 MiB      0.0 MiB                                                  norm=MidpointNormalize(resid_it.min(),
+   766   1690.0 MiB      0.1 MiB                                                                         resid_it.max(), 0))
+   767   1690.0 MiB      0.0 MiB                               ax2.set_title(f'{np.round(tmax_it,2)} yrs', fontsize=fontsize)
+   768                                                         #         ax2.set_extent(extent_)
+   769                             
+   770                                                         # GP regression
+   771   1690.0 MiB      0.0 MiB                               ax3.coastlines(color='k')
+   772   1690.0 MiB      0.0 MiB                               pc = da_priorplusgpr[i].plot(ax=ax3,
+   773   1690.0 MiB      0.0 MiB                                                            transform=proj,
+   774   1690.0 MiB      0.0 MiB                                                            norm=MidpointNormalize(vmin, vmax, 0),
+   775   1690.0 MiB      0.0 MiB                                                            cmap=cmap,
+   776   1690.0 MiB      0.0 MiB                                                            extend='both',
+   777   1690.0 MiB      0.2 MiB                                                            add_colorbar=False)
+   778   1690.0 MiB      0.0 MiB                               scat = ax3.scatter(lon_it,
+   779   1690.0 MiB      0.0 MiB                                                  lat_it,
+   780   1690.0 MiB      0.0 MiB                                                  s=80,
+   781   1690.0 MiB      0.0 MiB                                                  c=rsl,
+   782   1690.0 MiB      0.0 MiB                                                  edgecolor='k',
+   783   1690.0 MiB      0.0 MiB                                                  cmap=cmap,
+   784   1690.0 MiB      0.0 MiB                                                  norm=MidpointNormalize(vmin, vmax, 0))
+   785   1690.0 MiB      0.0 MiB                               cbar = fig.colorbar(pc,
+   786   1690.0 MiB      0.0 MiB                                                   ax=ax3,
+   787   1690.0 MiB      0.0 MiB                                                   shrink=.3,
+   788   1690.0 MiB      0.0 MiB                                                   label='RSL (m)',
+   789   1690.2 MiB      0.3 MiB                                                   extend='both')
+   790   1690.2 MiB      0.0 MiB                               ax3.set_title(f'{np.round(tmax_it,2)} yrs', fontsize=fontsize)
+   791                                                         #         ax3.set_extent(extent_)
+   792                             
+   793                                                         #GP regression standard deviation
+   794   1690.2 MiB      0.3 MiB                               ax4.coastlines(color='k')
+   795   1690.2 MiB      0.1 MiB                               pc = (2 * np.sqrt(da_varp[i])).plot(
+   796   1690.2 MiB      0.0 MiB                                   ax=ax4,
+   797   1690.2 MiB      0.0 MiB                                   transform=proj,
+   798   1690.2 MiB      0.0 MiB                                   vmin=vmin_std,
+   799   1690.2 MiB      0.0 MiB                                   vmax=vmax_std * 2,
+   800   1690.2 MiB      0.0 MiB                                   cmap='Reds',
+   801   1690.2 MiB      0.0 MiB                                   extend='both',
+   802   1690.2 MiB      0.2 MiB                                   add_colorbar=False,
+   803                                                         )
+   804   1690.2 MiB      0.0 MiB                               scat = ax4.scatter(lon_it,
+   805   1690.2 MiB      0.0 MiB                                                  lat_it,
+   806   1690.2 MiB      0.0 MiB                                                  s=80,
+   807   1690.2 MiB      0.0 MiB                                                  c=2 * np.sqrt(var),
+   808   1690.2 MiB      0.0 MiB                                                  vmin=vmin_std,
+   809   1690.2 MiB      0.0 MiB                                                  vmax=vmax_std * 2,
+   810   1690.2 MiB      0.0 MiB                                                  cmap='Reds',
+   811   1690.2 MiB      0.0 MiB                                                  edgecolor='k',
+   812   1690.2 MiB      0.3 MiB                                                  transform=proj)
+   813   1690.2 MiB      0.0 MiB                               cbar = fig.colorbar(pc,
+   814   1690.2 MiB      0.0 MiB                                                   ax=ax4,
+   815   1690.2 MiB      0.0 MiB                                                   shrink=.3,
+   816   1690.2 MiB      0.0 MiB                                                   extend='both',
+   817   1690.5 MiB      0.3 MiB                                                   label='RSL (m) (2 $\sigma$)')
+   818   1690.5 MiB      0.0 MiB                               ax4.set_title(f'{np.round(tmax_it,2)} yrs', fontsize=fontsize)
+   819                                                 #         ax4.set_extent(extent_)
+   820                             
+   821                                                 ########## ----- Save figures -------- #######################
+   822   1705.6 MiB      0.8 MiB                               fig.savefig(dirName + f'{path_gen}_{age}_3Dfig', transparent=True)
+   823                             
+   824                                                 ##################	CHOOSE LOCS W/NUF SAMPS #######################
+   825                                                 ##################  --------------------	 ######################
+   826                             
+   827                             
+   828   1705.6 MiB      0.0 MiB                       def locs_with_enoughsamples(df_place, place, number):
+   829                                                     """make new dataframe, labeled, of sites with [> number] measurements"""
+   830   1705.6 MiB      0.0 MiB                           df_lots = df_place.groupby(['lat',
+   831   1705.9 MiB      0.2 MiB                                                       'lon']).filter(lambda x: len(x) > number)
+   832                             
+   833   1705.9 MiB      0.0 MiB                           df_locs = []
+   834   1706.0 MiB      0.0 MiB                           for i, group in enumerate(df_lots.groupby(['lat', 'lon'])):
+   835   1706.0 MiB      0.0 MiB                               singleloc = group[1].copy()
+   836   1706.0 MiB      0.1 MiB                               singleloc['location'] = place
+   837   1706.0 MiB      0.0 MiB                               singleloc['locnum'] = place + '_site' + str(
+   838   1706.0 MiB      0.0 MiB                                   i)  # + singleloc.reset_index().index.astype('str')
+   839   1706.0 MiB      0.0 MiB                               df_locs.append(singleloc)
+   840   1706.0 MiB      0.0 MiB                           df_locs = pd.concat(df_locs)
+   841                             
+   842   1706.0 MiB      0.0 MiB                           return df_locs
+   843                             
+   844                             
+   845   1705.6 MiB      0.0 MiB                       number = 8
+   846   1706.0 MiB      0.0 MiB                       df_nufsamps = locs_with_enoughsamples(df_place, place, number)
+   847   1706.0 MiB      0.0 MiB                       len(df_nufsamps.locnum.unique())
+   848                             
+   849                                                 ##################	PLOT LOCS W/NUF SAMPS   #######################
+   850                                                 ##################  --------------------	 ######################
+   851                             
+   852                             
+   853   1721.9 MiB      0.0 MiB                       def slice_dataarray(da):
+   854   1721.9 MiB      0.0 MiB                           return da.sel(lat=site[1].lat.unique(),
+   855   1721.9 MiB      0.0 MiB                                         lon=site[1].lon.unique(),
+   856   1721.9 MiB      0.0 MiB                                         method='nearest')
+   857                             
+   858                             
+   859   1720.7 MiB     14.7 MiB                       fig, ax = plt.subplots(4, len(df_nufsamps.locnum.unique()), figsize=(18, 16))
+   860   1720.7 MiB      0.0 MiB                       ax = ax.ravel()
+   861   1720.7 MiB      0.0 MiB                       colors = ['darkgreen', 'darkblue', 'darkred']
+   862   1720.7 MiB      0.0 MiB                       fontsize = 18
+   863                             
+   864   1721.9 MiB      0.1 MiB                       for i, site in enumerate(df_nufsamps.groupby('locnum')):
+   865                             
+   866                                                     #slice data for each site
+   867   1721.9 MiB      0.0 MiB                           prior_it = slice_dataarray(da_giapriorinterp)
+   868   1721.9 MiB      0.0 MiB                           priorvar_it = slice_dataarray(da_giapriorinterpstd)
+   869   1721.9 MiB      0.0 MiB                           top_prior = prior_it + priorvar_it * 2
+   870   1721.9 MiB      0.0 MiB                           bottom_prior = prior_it - priorvar_it * 2
+   871                             
+   872   1721.9 MiB      0.0 MiB                           var_it = slice_dataarray(np.sqrt(da_varp))
+   873   1721.9 MiB      0.0 MiB                           post_it = slice_dataarray(da_priorplusgpr)
+   874   1721.9 MiB      0.0 MiB                           top = post_it + var_it * 2
+   875   1721.9 MiB      0.0 MiB                           bottom = post_it - var_it * 2
+   876                             
+   877   1721.9 MiB      0.0 MiB                           site_err = 2 * (site[1].rsl_er_max)
+   878                             
+   879   1721.9 MiB      0.1 MiB                           ax[i].scatter(site[1].age, site[1].rsl, c=colors[0], label='"true" RSL')
+   880   1721.9 MiB      0.0 MiB                           ax[i].errorbar(
+   881   1721.9 MiB      0.0 MiB                               site[1].age,
+   882   1721.9 MiB      0.0 MiB                               site[1].rsl,
+   883   1721.9 MiB      0.0 MiB                               site_err,
+   884   1721.9 MiB      0.0 MiB                               c=colors[0],
+   885   1721.9 MiB      0.0 MiB                               fmt='none',
+   886   1721.9 MiB      0.0 MiB                               capsize=1,
+   887   1721.9 MiB      0.1 MiB                               lw=1,
+   888                                                     )
+   889                             
+   890   1721.9 MiB      0.0 MiB                           prior_it.plot(ax=ax[i], c=colors[2], label='Prior $\pm 2 \sigma$')
+   891   1721.9 MiB      0.0 MiB                           ax[i].fill_between(prior_it.age,
+   892   1721.9 MiB      0.0 MiB                                              bottom_prior.squeeze(),
+   893   1721.9 MiB      0.0 MiB                                              top_prior.squeeze(),
+   894   1721.9 MiB      0.0 MiB                                              color=colors[2],
+   895   1721.9 MiB      0.0 MiB                                              alpha=0.3)
+   896                             
+   897   1721.9 MiB      0.1 MiB                           post_it.plot(ax=ax[i], c=colors[1], label='Posterior $\pm 2 \sigma$')
+   898   1721.9 MiB      0.0 MiB                           ax[i].fill_between(post_it.age,
+   899   1721.9 MiB      0.0 MiB                                              bottom.squeeze(),
+   900   1721.9 MiB      0.0 MiB                                              top.squeeze(),
+   901   1721.9 MiB      0.0 MiB                                              color=colors[1],
+   902   1721.9 MiB      0.0 MiB                                              alpha=0.3)
+   903                                                     #     ax[i].set_title(f'{site[0]} RSL', fontsize=fontsize)
+   904   1721.9 MiB      0.0 MiB                           ax[i].set_title('')
+   905                             
+   906   1721.9 MiB      0.1 MiB                           ax[i].legend(loc='lower left')
+   907                             
+   908   1721.9 MiB      0.0 MiB                       fig.savefig(dirName + f'{path_gen}_1Dfig',
+   909   1737.4 MiB     15.5 MiB                                   transparent=True)
+   910                             
+   911                                                 #plot locations of data
+   912   1737.4 MiB      0.0 MiB                       fig, ax = plt.subplots(2,len(df_nufsamps.locnum.unique()),
+   913   1745.4 MiB      8.0 MiB                                              figsize=(18, 4), subplot_kw=dict(projection=projection))
+   914   1745.4 MiB      0.0 MiB                       ax = ax.ravel()
+   915                             
+   916   1747.4 MiB      2.0 MiB                       da_zeros = xr.zeros_like(da_zp)
+   917                             
+   918   1748.2 MiB      0.0 MiB                       for i, site in enumerate(df_nufsamps.groupby('locnum')):
+   919   1748.2 MiB      0.0 MiB                           ax[i].coastlines(color='k')
+   920   1748.2 MiB      0.0 MiB                           ax[i].plot(site[1].lon.unique(),
+   921   1748.2 MiB      0.0 MiB                                      site[1].lat.unique(),
+   922   1748.2 MiB      0.0 MiB                                      c=colors[0],
+   923   1748.2 MiB      0.0 MiB                                      ms=7,
+   924   1748.2 MiB      0.0 MiB                                      marker='o',
+   925   1748.2 MiB      0.0 MiB                                      transform=proj)
+   926   1748.2 MiB      0.0 MiB                           ax[i].plot(site[1].lon.unique(),
+   927   1748.2 MiB      0.0 MiB                                      site[1].lat.unique(),
+   928   1748.2 MiB      0.0 MiB                                      c=colors[0],
+   929   1748.2 MiB      0.0 MiB                                      ms=25,
+   930   1748.2 MiB      0.0 MiB                                      marker='o',
+   931   1748.2 MiB      0.0 MiB                                      transform=proj,
+   932   1748.2 MiB      0.0 MiB                                      mfc="None",
+   933   1748.2 MiB      0.0 MiB                                      mec='red',
+   934   1748.2 MiB      0.1 MiB                                      mew=4)
+   935   1748.2 MiB      0.3 MiB                           da_zeros[0].plot(ax=ax[i], cmap='Greys', add_colorbar=False)
+   936   1748.2 MiB      0.0 MiB                           ax[i].set_title(site[0], fontsize=fontsize)
+   937                             
+   938   1751.8 MiB      3.7 MiB                       fig.savefig(dirName + f'{path_gen}_1Dfig_locs', transparent=True)
+   939                             
+   940                                                 #################   DECOMPOSE GPR INTO KERNELS ####################
+   941                                                 ##################  --------------------	 ######################
+   942                             
+   943   1751.8 MiB      0.0 MiB                       if decomp == 'true':
+   944                             
+   945                                                     def predict_decomp_f(m,
+   946                                                                          custom_kernel,
+   947                                                                          predict_at: tf.Tensor,
+   948                                                                          full_cov: bool = False,
+   949                                                                          full_output_cov: bool = False,
+   950                                                                          var=None):
+   951                                                         """Decompose GP into individual kernels."""
+   952                             
+   953                                                         x_data, y_data = m.data
+   954                                                         err = y_data - m.mean_function(x_data)
+   955                                                         kmm = m.kernel(x_data)
+   956                                                         knn = custom_kernel(predict_at, full=full_cov)
+   957                                                         kmn = custom_kernel(x_data, predict_at)
+   958                                                         num_data = x_data.shape[0]
+   959                                                         s = tf.linalg.diag(tf.convert_to_tensor(var))  # added diagonal variance
+   960                                                         conditional = gpf.conditionals.base_conditional
+   961                                                         f_mean_zero, f_var = conditional(
+   962                                                             kmn, kmm + s, knn, err, full_cov=full_cov,
+   963                                                             white=False)  # [N, P], [N, P] or [P, N, N]
+   964                                                         f_mean = np.array(f_mean_zero + m.mean_function(predict_at))
+   965                                                         f_var = np.array(f_var)
+   966                                                         return f_mean, f_var
+   967                             
+   968                             
+   969                                                     def reshape_decomp(k, var=None):
+   970                                                         A, var = predict_decomp_f(m, k, xyt, var=var)
+   971                                                         A = A.reshape(nout, nout, len(ages))
+   972                                                         var = var.reshape(nout, nout, len(ages))
+   973                                                         return A, var
+   974                             
+   975                             
+   976                                                     def make_dataarray(da):
+   977                                                         coords = [lon, lat, ages]
+   978                                                         dims = ['lon', 'lat', 'age']
+   979                                                         return xr.DataArray(da, coords=coords,
+   980                                                                             dims=dims).transpose('age', 'lat', 'lon')
+   981                             
+   982                             
+   983                                                     A1, var1 = reshape_decomp(k1,var=df_place.rsl_er_max.ravel()**2)  #gia spatial
+   984                                                     A2, var2 = reshape_decomp(k2,var=df_place.rsl_er_max.ravel()**2)  #gia temporal
+   985                                                     A3, var3 = reshape_decomp(k3,var=df_place.rsl_er_max.ravel()**2)  #readvance spatial
+   986                                                     A4, var4 = reshape_decomp(k4,var=df_place.rsl_er_max.ravel()**2)  #readvance temporal
+   987                                                     A5, var5 = reshape_decomp(k5, var=df_place.rsl_er_max.ravel()**2)  #readvance spatial
+   988                             
+   989                                                     da_A1 = make_dataarray(A1)
+   990                                                     da_var1 = make_dataarray(var1)
+   991                             
+   992                                                     da_A2 = make_dataarray(A2)
+   993                                                     da_var2 = make_dataarray(var2)
+   994                             
+   995                                                     da_A3 = make_dataarray(A3)
+   996                                                     da_var3 = make_dataarray(var3)
+   997                             
+   998                                                     da_A4 = make_dataarray(A4)
+   999                                                     da_var4 = make_dataarray(var4)
+  1000                             
+  1001                                                     da_A5 = make_dataarray(A5)
+  1002                                                     da_var5 = make_dataarray(var5)
+  1003                             
+  1004                                                     da_A1.to_netcdf(f'output/{path_gen}_da_A1')
+  1005                                                     da_var1.to_netcdf(f'output/{path_gen}_da_var1')
+  1006                                                     da_A2.to_netcdf(f'output/{path_gen}_da_A2')
+  1007                                                     da_var2.to_netcdf(f'output/{path_gen}_da_var2')
+  1008                                                     da_A3.to_netcdf(f'output/{path_gen}_da_A3')
+  1009                                                     da_var3.to_netcdf(f'output/{path_gen}_da_var3')
+  1010                                                     da_A4.to_netcdf(f'output/{path_gen}_da_A4')
+  1011                                                     da_var4.to_netcdf(f'output/{path_gen}_da_var4')
+  1012                                                     da_A5.to_netcdf(f'output/{path_gen}_da_A5')
+  1013                                                     da_var5.to_netcdf(f'output/{path_gen}_da_var5')
+  1014                             
+  1015                             
+  1016                                                     #################   PLOT DECOMPOSED KERNELS    ####################
+  1017                                                     ##################  --------------------	   ####################
+  1018                             
+  1019                                                     fig, ax = plt.subplots(1, 6, figsize=(24, 4))
+  1020                                                     ax = ax.ravel()
+  1021                                                     da_A1[0, :, :].plot(ax=ax[0], cmap='RdBu_r')
+  1022                                                     da_A2[0, :, :].plot(ax=ax[1], cmap='RdBu_r')
+  1023                                                     da_A3[0, :, :].plot(ax=ax[2], cmap='RdBu_r')
+  1024                                                     da_A4[:, 0, 0].plot(ax=ax[3])
+  1025                                                     da_A5[:, 0, 0].plot(ax=ax[4])
+  1026                             
+  1027                                                     fig.savefig(dirName + f'{path_gen}_decompkernels', transparent=True)
+  1028                                                 else:
+  1029                                                     pass
+  1030                             
+  1031                                             else:
+  1032                                                 pass
+  1033                             
+  1034                                         #store log likelihood in dataframe
+  1035   1751.8 MiB      0.0 MiB                   df_out = pd.DataFrame({'modelrun': modrunlist,
+  1036   1751.8 MiB      0.0 MiB                                    'log_marginal_likelihood': loglikelist})
+  1037                             
+  1038                             
+  1039   1751.8 MiB      0.0 MiB                   writepath = f'output/{path_gen}_loglikelihood'
+  1040   1751.9 MiB      0.0 MiB                   df_out.to_csv(writepath, index=False)
+  1041   1752.1 MiB      0.2 MiB                   df_likes = pd.read_csv(writepath)
+  1042                             
+  1043                                         # make heatmap for upper vs. lower mantle viscosities at one lithosphere thickness
+  1044                             
+  1045   1752.1 MiB      0.0 MiB               if ice_model =='glac1d_':
+  1046   1752.1 MiB      0.0 MiB                   df_likes['um'] = [key.split('_')[2][3:] for key in df_likes.modelrun]
+  1047   1752.1 MiB      0.0 MiB                   df_likes['lm'] = [key.split('_')[3][2:] for key in df_likes.modelrun]
+  1048   1752.1 MiB      0.0 MiB                   df_likes['lith'] = [key.split('_')[1][1:3] for key in df_likes.modelrun]
+  1049   1752.1 MiB      0.0 MiB                   df_likes['icemodel'] = [key.split('_')[0] for key in df_likes.modelrun]
+  1050                                         elif ice_model == 'd6g_h6g_':
+  1051                             #                 df_likes = df_likes.drop([36])
+  1052                                             df_likes['um'] = [key.split('_')[3][3:] for key in df_likes.modelrun]
+  1053                                             df_likes['lm'] = [key.split('_')[4][2:] for key in df_likes.modelrun]
+  1054                                             df_likes['lith'] = [key.split('_')[2][1:3] for key in df_likes.modelrun]
+  1055                                             df_likes['icemodel'] = [key.split('_l')[0] for key in df_likes.modelrun]
+  1056                             
+  1057   1752.1 MiB      0.0 MiB               df_likes.lm = df_likes.lm.astype(float)
+  1058   1752.1 MiB      0.0 MiB               df_likes.um = df_likes.um.astype(float)
+  1059   1752.4 MiB      0.3 MiB               heatmap = df_likes.pivot_table(index='um', columns='lm', values='log_marginal_likelihood')
+  1060                             
+  1061                             
+  1062   1752.6 MiB      0.2 MiB               fig, ax = plt.subplots(1, 1, figsize=(6, 6))
+  1063   1754.1 MiB      1.5 MiB               sns.heatmap(heatmap,  cmap='coolwarm', ax=ax,  cbar_kws={'label': 'negative log likelihood'})
+  1064   1754.1 MiB      0.0 MiB               ax.set_title(f'{place} {ages[0]} - {ages[-1]} yrs \n {ice_model} : {df_likes.lith[0]} km lithosphere'); # (havsine)
+  1065                             
+  1066   1754.3 MiB      0.2 MiB               fig.savefig(dirName + f'{path_gen}_likelihood_heatmap', transparent=True)   # _havsine
+
+
