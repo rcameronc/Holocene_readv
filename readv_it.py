@@ -665,10 +665,10 @@ def readv():
                 ##################  --------------------	 ######################
 
                 path_gen = f'{ages[0]}_{ages[-1]}_{model}_{mantle}_{place}'
-                da_zp.to_netcdf('output/' + path_gen + '_da_zp')
+                da_zp.to_netcdf('output/' + path_gen + '_dazp')
                 da_giapriorinterp.to_netcdf('output/' + path_gen + '_giaprior')
                 da_priorplusgpr.to_netcdf('output/' + path_gen + '_posterior')
-                da_varp.to_netcdf('output/' + path_gen + '_gp_variance')
+                da_varp.to_netcdf('output/' + path_gen + '_gpvariance')
 
                 ##################		  PLOT  MODELS 		#######################
                 ##################  --------------------	 ######################

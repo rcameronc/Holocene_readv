@@ -3,7 +3,7 @@
 ## adjust for your love numbers
 
 # Ice model
-for name in glac1d_ # d6g_h6g_
+for name in glac1d_ d6g_h6g_
 do
 
 #Earth model
@@ -22,7 +22,7 @@ do
 for tmin in 1490
 do
 
-for place in namerica
+for place in fennoscandia
 do
 
 # put together file name
