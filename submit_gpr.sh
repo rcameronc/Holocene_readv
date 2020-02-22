@@ -3,17 +3,17 @@
 ## adjust for your love numbers
 
 # Ice model
-for name in glac1d_ # d6g_h6g_
+for name in glac1d_ d6g_h6g_
 do
 
 #Earth model
-for lith in l96C # l71C 
+for lith in l96C  l71C 
 do
 
-for lm in 3 # 5 7 8 9 10 15 20 30 40 50
+for lm in 3  5 7 8 9 10 15 20 30 40 50
 do
 
-for um in p2 # p3 p4 p5
+for um in p2  p3 p4 p5
 do
 
 for tmax in 12010
@@ -22,7 +22,7 @@ do
 for tmin in 1490
 do
 
-for place in atlantic
+for place in fennoscandia
 do
 
 # put together file name
@@ -47,7 +47,7 @@ exec 4<> $fileName_run
     echo "cd .." >&4
     echo "python -m memory_profiler readv_it.py --mod $name 
             --lith $lith --um $um --lm $lm --tmax $tmax --tmin $tmin
-            --place atlantic" >&4
+            --place $place" >&4
     echo "exit" >&4
 
 # Close fd 4
