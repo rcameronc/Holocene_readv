@@ -1,0 +1,12 @@
+#!/bin/bash
+#SBATCH -o out_d6g_h6g_l96C_p3_3_12010_1490.out
+#SBATCH -A jalab
+#SBATCH -J d6g_h6g_l96C_p3_3_12010_1490
+#SBATCH --mem-per-cpu=125gb
+#SBATCH --time=12:00:00
+#SBATCH --mail-type=ALL
+#SBATCH --mail-user=rcreel@ldeo.columbia.edu
+ 
+source activate gpflow6_0
+cd ../run_gpr/
+bash run_d6g_h6g_l96C_p3_3_12010_1490.sh
