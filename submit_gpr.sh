@@ -71,7 +71,7 @@ cd execute_gpr
     echo "#SBATCH -A jalab" >&3
     echo "#SBATCH -J $run_name" >&3
     echo "#SBATCH --mem-per-cpu=125gb" >&3
-    echo "#SBATCH --time=12:00:00" >&3
+    echo "#SBATCH --time=24:00:00" >&3
     echo "#SBATCH --mail-type=ALL"  >&3  # specify what kind of emails you want to get
     echo "#SBATCH --mail-user=rcreel@ldeo.columbia.edu" >&3  # specify email address"
     echo " " >&3
