@@ -605,7 +605,7 @@ def readv():
                     print('model minimized, time=', time.time() - start)
 
                     # output space
-                    nout = 400
+                    nout = 100
                     lat = np.linspace(min(ds_area.lat), max(ds_area.lat), nout)
                     lon = np.linspace(min(ds_area.lon), max(ds_area.lon), nout)
                     ages = ages_lgm[(ages_lgm < tmax) & (ages_lgm > tmin)]
