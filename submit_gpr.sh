@@ -19,7 +19,7 @@ do
 for tmax in 12010
 do
 
-for tmin in 7990  
+for tmin in 1990 5990 9990
 do
 
 for place in fennoscandia europe
