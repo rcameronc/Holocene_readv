@@ -97,7 +97,7 @@ def readv():
                 'fennoscandia': [-15, 52, 45, 75],
             }
             extent = locs[place]
-            tmax, tmin, tstep = tmax, tmin, 100
+            tmax, tmin, tstep = int(tmax), int(tmin), 100
 
             ages_lgm = np.arange(100, 26000, tstep)[::-1]
 
