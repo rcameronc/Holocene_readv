@@ -95,7 +95,7 @@ def readv():
                 'eastcoast': [-88, -65, 15, 40],
                 'europe': [-20, 15, 35, 70],
                 'atlantic':[-85,50, 25, 73],
-                'fennoscandia': [-15, 52, 45, 75],
+                'fennoscandia': [-15, 50, 45, 75],
             }
             extent = locs[place]
             tmax, tmin, tstep = int(tmax), int(tmin), 100
@@ -563,7 +563,7 @@ def readv():
                     #define kernels  with bounds
 
                     k1 = HaversineKernel_Matern32(active_dims=[0, 1])
-                    k1.lengthscale = bounded_parameter(6000, 30000, 10000)  #hemispheric space
+                    k1.lengthscale = bounded_parameter(5000, 30000, 10000)  #hemispheric space
                     k1.variance = bounded_parameter(0.1, 100, 2)
 
                     # k1 = gpf.kernels.Matern32(active_dims=[0, 1])
@@ -571,7 +571,7 @@ def readv():
                     # k1.variance = bounded_parameter(0.05, 100, 2)
 
                     k2 = HaversineKernel_Matern32(active_dims=[0, 1])
-                    k2.lengthscale = bounded_parameter(1, 6000, 1000)  #GIA space
+                    k2.lengthscale = bounded_parameter(1, 5000, 1000)  #GIA space
                     k2.variance = bounded_parameter(0.1, 100, 2)
 
                     # k2 = gpf.kernels.Matern32(active_dims=[0,1])
