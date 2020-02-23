@@ -19,7 +19,7 @@ do
 for tmax in 12010
 do
 
-for tmin in 4990  
+for tmin in 7990  
 do
 
 for place in fennoscandia europe
@@ -69,7 +69,7 @@ cd execute_gpr
     echo "#SBATCH -A jalab" >&3
     echo "#SBATCH -J $run_name" >&3
     echo "#SBATCH --mem-per-cpu=125gb" >&3
-    echo "#SBATCH --time=12:00:00" >&3
+    echo "#SBATCH --time=8:00:00" >&3
     echo "#SBATCH --mail-type=ALL"  >&3  # specify what kind of emails you want to get
     echo "#SBATCH --mail-user=rcreel@ldeo.columbia.edu" >&3  # specify email address"
     echo " " >&3
