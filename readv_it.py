@@ -839,10 +839,26 @@ def readv():
                         df_locs = pd.concat(df_locs)
 
                         return df_locs
+                    
+                    try:
+                        number = 8
+                        df_nufsamps = locs_with_enoughsamples(df_place, place, number)
+                    except:
+                        try:
+                            number = 7
+                            df_nufsamps = locs_with_enoughsamples(df_place, place, number)
+                        except: 
+                            number = 6
+                            df_nufsamps = locs_with_enoughsamples(df_place, place, number)
+                    else:
+                        try:
+                            number = 5
+                            df_nufsamps = locs_with_enoughsamples(df_place, place, number)
+                        except:
+                            number = 4
+                            df_nufsamps = locs_with_enoughsamples(df_place, place, number)
 
 
-                    number = 8
-                    df_nufsamps = locs_with_enoughsamples(df_place, place, number)
                     len(df_nufsamps.locnum.unique())
 
                     ##################	PLOT LOCS W/NUF SAMPS   #######################

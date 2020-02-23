@@ -45,9 +45,7 @@ exec 4<> $fileName_run
 
     # Let's print some text to fd 3
     echo "cd .." >&4
-    echo "python -m memory_profiler readv_it.py --mod $name 
-            --lith $lith --um $um --lm $lm --tmax $tmax --tmin $tmin
-            --place $place" >&4
+    echo "python -m memory_profiler readv_it.py --mod $name --lith $lith --um $um --lm $lm --tmax $tmax --tmin $tmin --place $place" >&4
     echo "exit" >&4
 
 # Close fd 4
