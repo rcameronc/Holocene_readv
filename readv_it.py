@@ -78,7 +78,7 @@ def readv():
     for i, ice_model in enumerate(ice_models):
         for k, lith_thickness in enumerate(lith_thicknesses):
             plotting = 'true'
-            plot_nufsamps == 'false'
+            plot_nufsamps = 'false'
             decomp = 'false'
             ice_model = ice_model 
             lith_thickness = lith_thickness 
