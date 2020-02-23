@@ -78,6 +78,7 @@ def readv():
     for i, ice_model in enumerate(ice_models):
         for k, lith_thickness in enumerate(lith_thicknesses):
             plotting = 'true'
+            plot_nufsamps == 'false'
             decomp = 'false'
             ice_model = ice_model 
             lith_thickness = lith_thickness 
@@ -823,134 +824,118 @@ def readv():
                     ##################	CHOOSE LOCS W/NUF SAMPS #######################
                     ##################  --------------------	 ######################
 
+                    if plot_nufsamps == 'true':
+                        def locs_with_enoughsamples(df_place, place, number):
+                            """make new dataframe, labeled, of sites with [> number] measurements"""
+                            df_lots = df_place.groupby(['lat',
+                                                        'lon']).filter(lambda x: len(x) > number)
 
-                    def locs_with_enoughsamples(df_place, place, number):
-                        """make new dataframe, labeled, of sites with [> number] measurements"""
-                        df_lots = df_place.groupby(['lat',
-                                                    'lon']).filter(lambda x: len(x) > number)
+                            df_locs = []
+                            for i, group in enumerate(df_lots.groupby(['lat', 'lon'])):
+                                singleloc = group[1].copy()
+                                singleloc['location'] = place
+                                singleloc['locnum'] = place + '_site' + str(
+                                    i)  # + singleloc.reset_index().index.astype('str')
+                                df_locs.append(singleloc)
+                            df_locs = pd.concat(df_locs)
 
-                        df_locs = []
-                        for i, group in enumerate(df_lots.groupby(['lat', 'lon'])):
-                            singleloc = group[1].copy()
-                            singleloc['location'] = place
-                            singleloc['locnum'] = place + '_site' + str(
-                                i)  # + singleloc.reset_index().index.astype('str')
-                            df_locs.append(singleloc)
-                        df_locs = pd.concat(df_locs)
+                            return df_locs
 
-                        return df_locs
-                    
-                    try:
-                        number = 8
+
+                        number = 3
                         df_nufsamps = locs_with_enoughsamples(df_place, place, number)
-                    except:
-                        try:
-                            number = 7
-                            df_nufsamps = locs_with_enoughsamples(df_place, place, number)
-                        except: 
-                            number = 6
-                            df_nufsamps = locs_with_enoughsamples(df_place, place, number)
-                    else:
-                        try:
-                            number = 5
-                            df_nufsamps = locs_with_enoughsamples(df_place, place, number)
-                        except:
-                            number = 4
-                            df_nufsamps = locs_with_enoughsamples(df_place, place, number)
+                        len(df_nufsamps.locnum.unique())
+
+                        ##################	PLOT LOCS W/NUF SAMPS   #######################
+                        ##################  --------------------	 ######################
 
 
-                    len(df_nufsamps.locnum.unique())
-
-                    ##################	PLOT LOCS W/NUF SAMPS   #######################
-                    ##################  --------------------	 ######################
-
-
-                    def slice_dataarray(da):
-                        return da.sel(lat=site[1].lat.unique(),
-                                      lon=site[1].lon.unique(),
-                                      method='nearest')
+                        def slice_dataarray(da):
+                            return da.sel(lat=site[1].lat.unique(),
+                                          lon=site[1].lon.unique(),
+                                          method='nearest')
 
 
-                    fig, ax = plt.subplots(4, len(df_nufsamps.locnum.unique()), figsize=(18, 16))
-                    ax = ax.ravel()
-                    colors = ['darkgreen', 'darkblue', 'darkred']
-                    fontsize = 18
+                        fig, ax = plt.subplots(4, len(df_nufsamps.locnum.unique()), figsize=(18, 16))
+                        ax = ax.ravel()
+                        colors = ['darkgreen', 'darkblue', 'darkred']
+                        fontsize = 18
 
-                    for i, site in enumerate(df_nufsamps.groupby('locnum')):
+                        for i, site in enumerate(df_nufsamps.groupby('locnum')):
 
-                        #slice data for each site
-                        prior_it = slice_dataarray(da_giapriorinterp)
-                        priorvar_it = slice_dataarray(da_giapriorinterpstd)
-                        top_prior = prior_it + priorvar_it * 2
-                        bottom_prior = prior_it - priorvar_it * 2
+                            #slice data for each site
+                            prior_it = slice_dataarray(da_giapriorinterp)
+                            priorvar_it = slice_dataarray(da_giapriorinterpstd)
+                            top_prior = prior_it + priorvar_it * 2
+                            bottom_prior = prior_it - priorvar_it * 2
 
-                        var_it = slice_dataarray(np.sqrt(da_varp))
-                        post_it = slice_dataarray(da_priorplusgpr)
-                        top = post_it + var_it * 2
-                        bottom = post_it - var_it * 2
+                            var_it = slice_dataarray(np.sqrt(da_varp))
+                            post_it = slice_dataarray(da_priorplusgpr)
+                            top = post_it + var_it * 2
+                            bottom = post_it - var_it * 2
 
-                        site_err = 2 * (site[1].rsl_er_max)
+                            site_err = 2 * (site[1].rsl_er_max)
 
-                        ax[i].scatter(site[1].age, site[1].rsl, c=colors[0], label='"true" RSL')
-                        ax[i].errorbar(
-                            site[1].age,
-                            site[1].rsl,
-                            site_err,
-                            c=colors[0],
-                            fmt='none',
-                            capsize=1,
-                            lw=1,
-                        )
+                            ax[i].scatter(site[1].age, site[1].rsl, c=colors[0], label='"true" RSL')
+                            ax[i].errorbar(
+                                site[1].age,
+                                site[1].rsl,
+                                site_err,
+                                c=colors[0],
+                                fmt='none',
+                                capsize=1,
+                                lw=1,
+                            )
 
-                        prior_it.plot(ax=ax[i], c=colors[2], label='Prior $\pm 2 \sigma$')
-                        ax[i].fill_between(prior_it.age,
-                                           bottom_prior.squeeze(),
-                                           top_prior.squeeze(),
-                                           color=colors[2],
-                                           alpha=0.3)
+                            prior_it.plot(ax=ax[i], c=colors[2], label='Prior $\pm 2 \sigma$')
+                            ax[i].fill_between(prior_it.age,
+                                               bottom_prior.squeeze(),
+                                               top_prior.squeeze(),
+                                               color=colors[2],
+                                               alpha=0.3)
 
-                        post_it.plot(ax=ax[i], c=colors[1], label='Posterior $\pm 2 \sigma$')
-                        ax[i].fill_between(post_it.age,
-                                           bottom.squeeze(),
-                                           top.squeeze(),
-                                           color=colors[1],
-                                           alpha=0.3)
-                        #     ax[i].set_title(f'{site[0]} RSL', fontsize=fontsize)
-                        ax[i].set_title('')
+                            post_it.plot(ax=ax[i], c=colors[1], label='Posterior $\pm 2 \sigma$')
+                            ax[i].fill_between(post_it.age,
+                                               bottom.squeeze(),
+                                               top.squeeze(),
+                                               color=colors[1],
+                                               alpha=0.3)
+                            #     ax[i].set_title(f'{site[0]} RSL', fontsize=fontsize)
+                            ax[i].set_title('')
 
-                        ax[i].legend(loc='lower left')
+                            ax[i].legend(loc='lower left')
 
-                    fig.savefig(dirName + f'{path_gen}_1Dfig',
-                                transparent=True)
+                        fig.savefig(dirName + f'{path_gen}_1Dfig',
+                                    transparent=True)
 
-                    #plot locations of data
-                    fig, ax = plt.subplots(2,len(df_nufsamps.locnum.unique()),
-                                           figsize=(18, 4), subplot_kw=dict(projection=projection))
-                    ax = ax.ravel()
+                        #plot locations of data
+                        fig, ax = plt.subplots(2,len(df_nufsamps.locnum.unique()),
+                                               figsize=(18, 4), subplot_kw=dict(projection=projection))
+                        ax = ax.ravel()
 
-                    da_zeros = xr.zeros_like(da_zp)
+                        da_zeros = xr.zeros_like(da_zp)
 
-                    for i, site in enumerate(df_nufsamps.groupby('locnum')):
-                        ax[i].coastlines(color='k')
-                        ax[i].plot(site[1].lon.unique(),
-                                   site[1].lat.unique(),
-                                   c=colors[0],
-                                   ms=7,
-                                   marker='o',
-                                   transform=proj)
-                        ax[i].plot(site[1].lon.unique(),
-                                   site[1].lat.unique(),
-                                   c=colors[0],
-                                   ms=25,
-                                   marker='o',
-                                   transform=proj,
-                                   mfc="None",
-                                   mec='red',
-                                   mew=4)
-                        da_zeros[0].plot(ax=ax[i], cmap='Greys', add_colorbar=False)
-                        ax[i].set_title(site[0], fontsize=fontsize)
+                        for i, site in enumerate(df_nufsamps.groupby('locnum')):
+                            ax[i].coastlines(color='k')
+                            ax[i].plot(site[1].lon.unique(),
+                                       site[1].lat.unique(),
+                                       c=colors[0],
+                                       ms=7,
+                                       marker='o',
+                                       transform=proj)
+                            ax[i].plot(site[1].lon.unique(),
+                                       site[1].lat.unique(),
+                                       c=colors[0],
+                                       ms=25,
+                                       marker='o',
+                                       transform=proj,
+                                       mfc="None",
+                                       mec='red',
+                                       mew=4)
+                            da_zeros[0].plot(ax=ax[i], cmap='Greys', add_colorbar=False)
+                            ax[i].set_title(site[0], fontsize=fontsize)
 
-                    fig.savefig(dirName + f'{path_gen}_1Dfig_locs', transparent=True)
+                        fig.savefig(dirName + f'{path_gen}_1Dfig_locs', transparent=True)
 
                     #################   DECOMPOSE GPR INTO KERNELS ####################
                     ##################  --------------------	 ######################
