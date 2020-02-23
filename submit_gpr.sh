@@ -10,10 +10,10 @@ do
 for lith in l96C l71C 
 do
 
-for lm in 10 # 3 5 7 8 9 10 15 20 30 40 50
+for lm in 10 3 5 7 8 9 10 15 20 30 40 50
 do
 
-for um in p4 # p2 p3 p4 p5
+for um in p4 p2 p3 p4 p5
 do
 
 for tmax in 12010
@@ -69,7 +69,7 @@ cd execute_gpr
     echo "#SBATCH -A jalab" >&3
     echo "#SBATCH -J $run_name" >&3
     echo "#SBATCH --mem-per-cpu=125gb" >&3
-    echo "#SBATCH --time=1:00:00" >&3
+    echo "#SBATCH --time=16:00:00" >&3
     echo "#SBATCH --mail-type=ALL"  >&3  # specify what kind of emails you want to get
     echo "#SBATCH --mail-user=rcreel@ldeo.columbia.edu" >&3  # specify email address"
     echo " " >&3

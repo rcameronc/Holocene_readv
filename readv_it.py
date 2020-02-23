@@ -78,6 +78,7 @@ def readv():
     for i, ice_model in enumerate(ice_models):
         for k, lith_thickness in enumerate(lith_thicknesses):
             plotting = 'true'
+            plot_heatmap = "false"
             plot_nufsamps = 'false'
             decomp = 'false'
             ice_model = ice_model 
@@ -1041,29 +1042,29 @@ def readv():
                 df_likes = pd.read_csv(writepath)
 
             # make heatmap for upper vs. lower mantle viscosities at one lithosphere thickness
+            if plot_heatmap == "true":
+                if ice_model =='glac1d_':
+                    df_likes['um'] = [key.split('_')[2][3:] for key in df_likes.modelrun]
+                    df_likes['lm'] = [key.split('_')[3][2:] for key in df_likes.modelrun]
+                    df_likes['lith'] = [key.split('_')[1][1:3] for key in df_likes.modelrun]
+                    df_likes['icemodel'] = [key.split('_')[0] for key in df_likes.modelrun]
+                elif ice_model == 'd6g_h6g_':
+    #                 df_likes = df_likes.drop([36])
+                    df_likes['um'] = [key.split('_')[3][3:] for key in df_likes.modelrun]
+                    df_likes['lm'] = [key.split('_')[4][2:] for key in df_likes.modelrun]
+                    df_likes['lith'] = [key.split('_')[2][1:3] for key in df_likes.modelrun]
+                    df_likes['icemodel'] = [key.split('_l')[0] for key in df_likes.modelrun]
 
-            if ice_model =='glac1d_':
-                df_likes['um'] = [key.split('_')[2][3:] for key in df_likes.modelrun]
-                df_likes['lm'] = [key.split('_')[3][2:] for key in df_likes.modelrun]
-                df_likes['lith'] = [key.split('_')[1][1:3] for key in df_likes.modelrun]
-                df_likes['icemodel'] = [key.split('_')[0] for key in df_likes.modelrun]
-            elif ice_model == 'd6g_h6g_':
-#                 df_likes = df_likes.drop([36])
-                df_likes['um'] = [key.split('_')[3][3:] for key in df_likes.modelrun]
-                df_likes['lm'] = [key.split('_')[4][2:] for key in df_likes.modelrun]
-                df_likes['lith'] = [key.split('_')[2][1:3] for key in df_likes.modelrun]
-                df_likes['icemodel'] = [key.split('_l')[0] for key in df_likes.modelrun]
-
-            df_likes.lm = df_likes.lm.astype(float)
-            df_likes.um = df_likes.um.astype(float)
-            heatmap = df_likes.pivot_table(index='um', columns='lm', values='log_marginal_likelihood')
+                df_likes.lm = df_likes.lm.astype(float)
+                df_likes.um = df_likes.um.astype(float)
+                heatmap = df_likes.pivot_table(index='um', columns='lm', values='log_marginal_likelihood')
 
 
-            fig, ax = plt.subplots(1, 1, figsize=(6, 6))
-            sns.heatmap(heatmap,  cmap='coolwarm', ax=ax,  cbar_kws={'label': 'negative log likelihood'})
-            ax.set_title(f'{place} {ages[0]} - {ages[-1]} yrs \n {ice_model} : {df_likes.lith[0]} km lithosphere'); # (havsine)
+                fig, ax = plt.subplots(1, 1, figsize=(6, 6))
+                sns.heatmap(heatmap,  cmap='coolwarm', ax=ax,  cbar_kws={'label': 'negative log likelihood'})
+                ax.set_title(f'{place} {ages[0]} - {ages[-1]} yrs \n {ice_model} : {df_likes.lith[0]} km lithosphere'); # (havsine)
 
-            fig.savefig(dirName + f'{path_gen}_likelihood_heatmap', transparent=True)   # _havsine
+                fig.savefig(dirName + f'{path_gen}_likelihood_heatmap', transparent=True)   # _havsine
 
 if __name__ == '__main__':
     readv()
