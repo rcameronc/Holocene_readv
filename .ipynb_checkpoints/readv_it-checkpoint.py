@@ -8,7 +8,7 @@ from memory_profiler import profile
 import numpy as np
 import pandas as pd
 import xarray as xr
-import dask.array as da
+# import dask.array as da
 import scipy.io as io
 from itertools import product
 import glob
@@ -62,26 +62,30 @@ def readv():
     parser.add_argument("--lith", default='l71C')
     parser.add_argument("--um", default="p2")
     parser.add_argument("--lm", default="3")
+    parser.add_argument("--tmax", default="4010")
+    parser.add_argument("--tmin", default="2990")
+    parser.add_argument("--place", default="fennoscandia")
 
     args = parser.parse_args()
     ice_models = [args.mod]
     lith_thicknesses = [args.lith]
     um = args.um
     lm = args.lm
-
-    #ice_models = ['d6g_h6g_']# , 'glac1d_']
-    #lith_thicknesses = ['l96C']# , 'l71C']
+    tmax = int(args.tmax)
+    tmin = int(args.tmin)
+    place = args.place
 
     for i, ice_model in enumerate(ice_models):
         for k, lith_thickness in enumerate(lith_thicknesses):
-            plotting = 'false'
+            plotting = 'true'
+            plot_heatmap = "false"
+            plot_nufsamps = 'false'
             decomp = 'false'
-            ice_model = ice_model # 'd6g_h6g_' # 'glac1d_' #   #
-            lith_thickness = lith_thickness # 'l96'  # 'l90C'
+            ice_model = ice_model 
+            lith_thickness = lith_thickness 
             model = ice_model + lith_thickness
-            place = 'fennoscandia'
-
-            print(ice_model)
+            place = place
+            mantle = f'um{um}_lm{lm}'
 
             locs = {
                 'england': [-12, 2, 50, 60],
@@ -91,11 +95,11 @@ def readv():
                 'namerica': [-150, -20, 10, 75],
                 'eastcoast': [-88, -65, 15, 40],
                 'europe': [-20, 15, 35, 70],
-                'atlantic':[-85,10, 25, 60],
-                'fennoscandia': [-15, 50, 45, 73],
+                'atlantic':[-85,50, 25, 73],
+                'fennoscandia': [-15, 50, 45, 75],
             }
             extent = locs[place]
-            tmax, tmin, tstep = 4010, 3490, 100
+            tmax, tmin, tstep = int(tmax), int(tmin), 100
 
             ages_lgm = np.arange(100, 26000, tstep)[::-1]
 
@@ -120,57 +124,57 @@ def readv():
                              & (dfind.lat < extent[3])][[
                                  'lat', 'lon', 'rsl', 'rsl_er_max', 'age'
                              ]]
-            # & (df_place.rsl_er_max < 1)
             df_place.shape
 
             ####################  	Plot locations  	#######################
             #################### ---------------------- #######################
 
             #get counts by location rounded to nearest 0.1 degree
-            df_rnd = df_place.copy()
-            df_rnd.lat = np.round(df_rnd.lat, 1)
-            df_rnd.lon = np.round(df_rnd.lon, 1)
-            dfcounts_place = df_rnd.groupby(
-                ['lat', 'lon']).count().reset_index()[['lat', 'lon', 'rsl', 'age']]
+            if plotting == 'true':
+                df_rnd = df_place.copy()
+                df_rnd.lat = np.round(df_rnd.lat, 1)
+                df_rnd.lon = np.round(df_rnd.lon, 1)
+                dfcounts_place = df_rnd.groupby(
+                    ['lat', 'lon']).count().reset_index()[['lat', 'lon', 'rsl', 'age']]
 
-            #plot
-            fig = plt.figure(figsize=(10, 7))
-            ax = plt.subplot(1, 1, 1, projection=ccrs.PlateCarree())
+                #plot
+                fig = plt.figure(figsize=(10, 7))
+                ax = plt.subplot(1, 1, 1, projection=ccrs.PlateCarree())
 
-            ax.set_extent(extent)
-            ax.coastlines(resolution='110m', linewidth=1, zorder=2)
-            ax.add_feature(cfeature.OCEAN, zorder=0)
-            ax.add_feature(cfeature.LAND, color='palegreen', zorder=1)
-            ax.add_feature(cfeature.BORDERS, linewidth=0.5, zorder=3)
-            ax.gridlines(linewidth=1, color='white', alpha=0.5, zorder=4)
-            scat = ax.scatter(dfcounts_place.lon,
-                              dfcounts_place.lat,
-                              s=dfcounts_place.rsl * 70,
-                              c='lightsalmon',
-                              vmin=-20,
-                              vmax=20,
-                              cmap='coolwarm',
-                              edgecolor='k',
-                              linewidths=1,
-                              transform=ccrs.PlateCarree(),
-                              zorder=5)
-            size = Line2D(range(4),
-                          range(4),
-                          color="black",
-                          marker='o',
-                          linewidth=0,
-                          linestyle='none',
-                          markersize=16,
-                          markerfacecolor="lightsalmon")
-            labels = ['RSL datapoint location']
-            leg = plt.legend([size],
-                             labels,
-                             loc='lower left',
-                             bbox_to_anchor=(0.00, 0.00),
-                             prop={'size': 20},
-                             fancybox=True)
-            leg.get_frame().set_edgecolor('k')
-            ax.set_title('')
+                ax.set_extent(extent)
+                ax.coastlines(resolution='110m', linewidth=1, zorder=2)
+                ax.add_feature(cfeature.OCEAN, zorder=0)
+                ax.add_feature(cfeature.LAND, color='palegreen', zorder=1)
+                ax.add_feature(cfeature.BORDERS, linewidth=0.5, zorder=3)
+                ax.gridlines(linewidth=1, color='white', alpha=0.5, zorder=4)
+                scat = ax.scatter(dfcounts_place.lon,
+                                  dfcounts_place.lat,
+                                  s=dfcounts_place.rsl * 70,
+                                  c='lightsalmon',
+                                  vmin=-20,
+                                  vmax=20,
+                                  cmap='coolwarm',
+                                  edgecolor='k',
+                                  linewidths=1,
+                                  transform=ccrs.PlateCarree(),
+                                  zorder=5)
+                size = Line2D(range(4),
+                              range(4),
+                              color="black",
+                              marker='o',
+                              linewidth=0,
+                              linestyle='none',
+                              markersize=16,
+                              markerfacecolor="lightsalmon")
+                labels = ['RSL datapoint location']
+                leg = plt.legend([size],
+                                 labels,
+                                 loc='lower left',
+                                 bbox_to_anchor=(0.00, 0.00),
+                                 prop={'size': 20},
+                                 fancybox=True)
+                leg.get_frame().set_edgecolor('k')
+                ax.set_title('')
 
             ####################  Make 3D fingerprint  #######################
             #################### ---------------------- #######################
@@ -355,6 +359,14 @@ def readv():
                                       df_place.lat.max() + 2)).load().to_dataset().interp(
                                           age=ds_readv.age, lon=ds_readv.lon, lat=ds_readv.lat)
 
+                    ds_area = one_mod(path, [ice_model + lith_thickness]).sel(modelrun=modelrun).rsl
+                    ds_area = ds_area.assign_coords({'lat':ds_area.lat.values[::-1]}).sel(
+                                            age=slice(tmax, tmin),
+                                            lon=slice(df_place.lon.min() - 2,
+                                                      df_place.lon.max() + 2),
+                                            lat=slice(df_place.lat.max() + 2,
+                                                      df_place.lat.min() - 2)).load().to_dataset().interp(
+                                            age=ds_readv.age, lon=ds_readv.lon, lat=ds_readv.lat)
 
                 #sample each model at points where we have RSL data
                 def ds_select(ds):
@@ -559,21 +571,21 @@ def readv():
 
                     #define kernels  with bounds
 
-    #                 k1 = HaversineKernel_Matern32(active_dims=[0, 1])
-    #                 k1.lengthscale = bounded_parameter(5000, 30000, 10000)  #hemispheric space
-    #                 k1.variance = bounded_parameter(0.1, 100, 2)
+                    k1 = HaversineKernel_Matern32(active_dims=[0, 1])
+                    k1.lengthscale = bounded_parameter(5000, 30000, 10000)  #hemispheric space
+                    k1.variance = bounded_parameter(0.1, 100, 2)
 
-                    k1 = gpf.kernels.Matern32(active_dims=[0, 1])
-                    k1.lengthscale = bounded_parameter(50, 500, 60)  #hemispheric space
-                    k1.variance = bounded_parameter(0.05, 100, 2)
+                    # k1 = gpf.kernels.Matern32(active_dims=[0, 1])
+                    # k1.lengthscale = bounded_parameter(50, 500, 60)  #hemispheric space
+                    # k1.variance = bounded_parameter(0.05, 100, 2)
 
-    #                 k2 = HaversineKernel_Matern32(active_dims=[0, 1])
-    #                 k2.lengthscale = bounded_parameter(10, 5000, 100)  #GIA space
-    #                 k2.variance = bounded_parameter(0.1, 100, 2)
+                    k2 = HaversineKernel_Matern32(active_dims=[0, 1])
+                    k2.lengthscale = bounded_parameter(1, 5000, 1000)  #GIA space
+                    k2.variance = bounded_parameter(0.1, 100, 2)
 
-                    k2 = gpf.kernels.Matern32(active_dims=[0,1])
-                    k2.lengthscale = bounded_parameter(1, 50, 5)  #GIA space
-                    k2.variance = bounded_parameter(0.05, 100, 2)
+                    # k2 = gpf.kernels.Matern32(active_dims=[0,1])
+                    # k2.lengthscale = bounded_parameter(1, 50, 5)  #GIA space
+                    # k2.variance = bounded_parameter(0.05, 100, 2)
 
                     k3 = gpf.kernels.Matern32(active_dims=[2])  #GIA time
                     k3.lengthscale = bounded_parameter(8000, 20000, 10000)
@@ -584,7 +596,7 @@ def readv():
                     k4.variance = bounded_parameter(0.1, 100, 1)
 
                     k5 = gpf.kernels.White(active_dims=[2])
-                    k5.variance = bounded_parameter(0.1, 100, 1)
+                    k5.variance = bounded_parameter(0.01, 100, 1)
 
                     kernel = (k1 * k3) + (k2 * k4) + k5
 
@@ -613,13 +625,11 @@ def readv():
                     y_pred_out = denormalize(y_pred, df_place.rsl_realresid)
 
                     #reshape output vectors
-#                    Xlon = np.array(xyt[:, 0]).reshape((nout, nout, len(ages)))
- #                   Xlat = np.array(xyt[:, 1]).reshape((nout, nout, len(ages)))
                     Zp = np.array(y_pred_out).reshape(nout, nout, len(ages))
                     varp = np.array(var).reshape(nout, nout, len(ages))
 
                     #print kernel details
-                #     print_summary(m, fmt='notebook')
+                    print_summary(m, fmt='notebook')
                     print('time elapsed = ', time.time() - start)
 
                     print('negative log marginal likelihood =',
@@ -656,17 +666,17 @@ def readv():
                     # add total prior RSL back into GPR
                     da_priorplusgpr = da_zp + da_giapriorinterp
 
-                    return ages, da_zp, da_giapriorinterp, da_priorplusgpr, da_varp, modrunlist, loglikelist
+                    return k1, k2, k3, k4, k5, nout, xyt, m, ages, da_zp, ds_giapriorinterp, da_giapriorinterpstd, da_giapriorinterp, da_priorplusgpr, da_varp, modrunlist, loglikelist
 
-                ages, da_zp, da_giapriorinterp, da_priorplusgpr, da_varp, modrunlist, loglikelist = run_gpr()
+                k1, k2, k3, k4, k5, nout, xyt, m, ages, da_zp, ds_giapriorinterp, da_giapriorinterpstd, da_giapriorinterp, da_priorplusgpr, da_varp, modrunlist, loglikelist = run_gpr()
                 ##################	  	 SAVE NETCDFS 	 	#######################
                 ##################  --------------------	 ######################
 
-                path_gen = f'{ages[0]}_{ages[-1]}_{model}_{place}'
-                da_zp.to_netcdf('output/' + path_gen + '_da_zp')
+                path_gen = f'{ages[0]}_{ages[-1]}_{model}_{mantle}_{place}'
+                da_zp.to_netcdf('output/' + path_gen + '_dazp')
                 da_giapriorinterp.to_netcdf('output/' + path_gen + '_giaprior')
                 da_priorplusgpr.to_netcdf('output/' + path_gen + '_posterior')
-                da_varp.to_netcdf('output/' + path_gen + '_gp_variance')
+                da_varp.to_netcdf('output/' + path_gen + '_gpvariance')
 
                 ##################		  PLOT  MODELS 		#######################
                 ##################  --------------------	 ######################
@@ -676,7 +686,6 @@ def readv():
                     print("Directory ", dirName, " Created ")
                 else:
                     pass
-        #             print("Directory ", dirName, " already exists")
 
                 if plotting == 'true':
                     for i, age in enumerate(ages):
@@ -686,8 +695,14 @@ def readv():
                             resid_it = da_zp.sel(age=slice(age, age - step))
                             rsl, var = df_it.rsl, df_it.rsl_er_max.values**2
                             lat_it, lon_it = df_it.lat, df_it.lon
-                            vmin = ds_giapriorinterp.rsl.min().values  # + 10
-                            vmax = ds_giapriorinterp.rsl.max().values  # - 40
+
+                            if ice_model == 'glac1d_':
+                                vmin = ds_giapriorinterp.rsl.min().values  + 50
+                                vmax = ds_giapriorinterp.rsl.max().values  - 100
+                            elif ice_model =='d6g_h6g_':
+                                vmin = ds_giapriorinterp.rsl.min().values  + 20
+                                vmax = ds_giapriorinterp.rsl.max().values  + 10
+
                             vmin_std = 0
                             vmax_std = 1
                             tmin_it = np.round(age - step, 2)
@@ -810,125 +825,123 @@ def readv():
                     #         ax4.set_extent(extent_)
 
                     ########## ----- Save figures -------- #######################
-                        fig.savefig(dirName + f'{path_gen}_{age}_3D_fig', transparent=True)
+                            fig.savefig(dirName + f'{path_gen}_{age}_3Dfig', transparent=True)
 
                     ##################	CHOOSE LOCS W/NUF SAMPS #######################
                     ##################  --------------------	 ######################
 
+                    if plot_nufsamps == 'true':
+                        def locs_with_enoughsamples(df_place, place, number):
+                            """make new dataframe, labeled, of sites with [> number] measurements"""
+                            df_lots = df_place.groupby(['lat',
+                                                        'lon']).filter(lambda x: len(x) > number)
 
-                    def locs_with_enoughsamples(df_place, place, number):
-                        """make new dataframe, labeled, of sites with [> number] measurements"""
-                        df_lots = df_place.groupby(['lat',
-                                                    'lon']).filter(lambda x: len(x) > number)
+                            df_locs = []
+                            for i, group in enumerate(df_lots.groupby(['lat', 'lon'])):
+                                singleloc = group[1].copy()
+                                singleloc['location'] = place
+                                singleloc['locnum'] = place + '_site' + str(
+                                    i)  # + singleloc.reset_index().index.astype('str')
+                                df_locs.append(singleloc)
+                            df_locs = pd.concat(df_locs)
 
-                        df_locs = []
-                        for i, group in enumerate(df_lots.groupby(['lat', 'lon'])):
-                            singleloc = group[1].copy()
-                            singleloc['location'] = place
-                            singleloc['locnum'] = place + '_site' + str(
-                                i)  # + singleloc.reset_index().index.astype('str')
-                            df_locs.append(singleloc)
-                        df_locs = pd.concat(df_locs)
-
-                        return df_locs
-
-
-                    number = 6
-                    df_nufsamps = locs_with_enoughsamples(df_place, place, number)
-                    len(df_nufsamps.locnum.unique())
-
-                    ##################	PLOT LOCS W/NUF SAMPS   #######################
-                    ##################  --------------------	 ######################
+                            return df_locs
 
 
-                    def slice_dataarray(da):
-                        return da.sel(lat=site[1].lat.unique(),
-                                      lon=site[1].lon.unique(),
-                                      method='nearest')
+                        number = 3
+                        df_nufsamps = locs_with_enoughsamples(df_place, place, number)
+                        len(df_nufsamps.locnum.unique())
+
+                        ##################	PLOT LOCS W/NUF SAMPS   #######################
+                        ##################  --------------------	 ######################
 
 
-                    fig, ax = plt.subplots(1, len(df_nufsamps.locnum.unique()), figsize=(18, 4))
-                    ax = ax.ravel()
-                    colors = ['darkgreen', 'darkblue', 'darkred']
-                    fontsize = 18
+                        def slice_dataarray(da):
+                            return da.sel(lat=site[1].lat.unique(),
+                                          lon=site[1].lon.unique(),
+                                          method='nearest')
 
-                    for i, site in enumerate(df_nufsamps.groupby('locnum')):
 
-                        #slice data for each site
-                        prior_it = slice_dataarray(da_giapriorinterp)
-                        priorvar_it = slice_dataarray(da_giapriorinterpstd)
-                        top_prior = prior_it + priorvar_it * 2
-                        bottom_prior = prior_it - priorvar_it * 2
+                        fig, ax = plt.subplots(4, len(df_nufsamps.locnum.unique()), figsize=(18, 16))
+                        ax = ax.ravel()
+                        colors = ['darkgreen', 'darkblue', 'darkred']
+                        fontsize = 18
 
-                        var_it = slice_dataarray(np.sqrt(da_varp))
-                        post_it = slice_dataarray(da_priorplusgpr)
-                        top = post_it + var_it * 2
-                        bottom = post_it - var_it * 2
+                        for i, site in enumerate(df_nufsamps.groupby('locnum')):
 
-                        site_err = 2 * (site[1].rsl_er_max)
+                            #slice data for each site
+                            prior_it = slice_dataarray(da_giapriorinterp)
+                            priorvar_it = slice_dataarray(da_giapriorinterpstd)
+                            top_prior = prior_it + priorvar_it * 2
+                            bottom_prior = prior_it - priorvar_it * 2
 
-                        ax[i].scatter(site[1].age, site[1].rsl, c=colors[0], label='"true" RSL')
-                        ax[i].errorbar(
-                            site[1].age,
-                            site[1].rsl,
-                            site_err,
-                            c=colors[0],
-                            fmt='none',
-                            capsize=1,
-                            lw=1,
-                        )
+                            var_it = slice_dataarray(np.sqrt(da_varp))
+                            post_it = slice_dataarray(da_priorplusgpr)
+                            top = post_it + var_it * 2
+                            bottom = post_it - var_it * 2
 
-                        prior_it.plot(ax=ax[i], c=colors[2], label='Prior $\pm 2 \sigma$')
-                        ax[i].fill_between(prior_it.age,
-                                           bottom_prior.squeeze(),
-                                           top_prior.squeeze(),
-                                           color=colors[2],
-                                           alpha=0.3)
+                            site_err = 2 * (site[1].rsl_er_max)
 
-                        post_it.plot(ax=ax[i], c=colors[1], label='Posterior $\pm 2 \sigma$')
-                        ax[i].fill_between(post_it.age,
-                                           bottom.squeeze(),
-                                           top.squeeze(),
-                                           color=colors[1],
-                                           alpha=0.3)
-                        #     ax[i].set_title(f'{site[0]} RSL', fontsize=fontsize)
-                        ax[i].set_title('')
+                            ax[i].scatter(site[1].age, site[1].rsl, c=colors[0], label='"true" RSL')
+                            ax[i].errorbar(
+                                site[1].age,
+                                site[1].rsl,
+                                site_err,
+                                c=colors[0],
+                                fmt='none',
+                                capsize=1,
+                                lw=1,
+                            )
 
-                        ax[i].legend(loc='lower left')
+                            prior_it.plot(ax=ax[i], c=colors[2], label='Prior $\pm 2 \sigma$')
+                            ax[i].fill_between(prior_it.age,
+                                               bottom_prior.squeeze(),
+                                               top_prior.squeeze(),
+                                               color=colors[2],
+                                               alpha=0.3)
 
-                    fig.savefig(dirName + f'{ages[0]}to{ages[-1]}_{place}_realdata_fig_1D',
-                                transparent=True)
+                            post_it.plot(ax=ax[i], c=colors[1], label='Posterior $\pm 2 \sigma$')
+                            ax[i].fill_between(post_it.age,
+                                               bottom.squeeze(),
+                                               top.squeeze(),
+                                               color=colors[1],
+                                               alpha=0.3)
+                            #     ax[i].set_title(f'{site[0]} RSL', fontsize=fontsize)
+                            ax[i].set_title('')
 
-                    #plot locations of data
-                    fig, ax = plt.subplots(1,
-                                           len(df_nufsamps.locnum.unique()),
-                                           figsize=(18, 4),
-                                           subplot_kw=dict(projection=projection))
-                    ax = ax.ravel()
+                            ax[i].legend(loc='lower left')
 
-                    da_zeros = xr.zeros_like(da_zp)
+                        fig.savefig(dirName + f'{path_gen}_1Dfig',
+                                    transparent=True)
 
-                    for i, site in enumerate(df_nufsamps.groupby('locnum')):
-                        ax[i].coastlines(color='k')
-                        ax[i].plot(site[1].lon.unique(),
-                                   site[1].lat.unique(),
-                                   c=colors[0],
-                                   ms=7,
-                                   marker='o',
-                                   transform=proj)
-                        ax[i].plot(site[1].lon.unique(),
-                                   site[1].lat.unique(),
-                                   c=colors[0],
-                                   ms=25,
-                                   marker='o',
-                                   transform=proj,
-                                   mfc="None",
-                                   mec='red',
-                                   mew=4)
-                        da_zeros[0].plot(ax=ax[i], cmap='Greys', add_colorbar=False)
-                        ax[i].set_title(site[0], fontsize=fontsize)
+                        #plot locations of data
+                        fig, ax = plt.subplots(2,len(df_nufsamps.locnum.unique()),
+                                               figsize=(18, 4), subplot_kw=dict(projection=projection))
+                        ax = ax.ravel()
 
-                    fig.savefig(dirName + f'{path_gen}_1Dlocs_fig', transparent=True)
+                        da_zeros = xr.zeros_like(da_zp)
+
+                        for i, site in enumerate(df_nufsamps.groupby('locnum')):
+                            ax[i].coastlines(color='k')
+                            ax[i].plot(site[1].lon.unique(),
+                                       site[1].lat.unique(),
+                                       c=colors[0],
+                                       ms=7,
+                                       marker='o',
+                                       transform=proj)
+                            ax[i].plot(site[1].lon.unique(),
+                                       site[1].lat.unique(),
+                                       c=colors[0],
+                                       ms=25,
+                                       marker='o',
+                                       transform=proj,
+                                       mfc="None",
+                                       mec='red',
+                                       mew=4)
+                            da_zeros[0].plot(ax=ax[i], cmap='Greys', add_colorbar=False)
+                            ax[i].set_title(site[0], fontsize=fontsize)
+
+                        fig.savefig(dirName + f'{path_gen}_1Dfig_locs', transparent=True)
 
                     #################   DECOMPOSE GPR INTO KERNELS ####################
                     ##################  --------------------	 ######################
@@ -973,19 +986,11 @@ def readv():
                                                 dims=dims).transpose('age', 'lat', 'lon')
 
 
-                        A1, var1 = reshape_decomp(k1,
-                                                  var=df_place.rsl_er_max.ravel()**2)  #gia spatial
-                        A2, var2 = reshape_decomp(k2,
-                                                  var=df_place.rsl_er_max.ravel()**2)  #gia temporal
-                        A3, var3 = reshape_decomp(
-                            k3,
-                            var=df_place.rsl_er_max.ravel()**2)  #readvance spatial
-                        A4, var4 = reshape_decomp(
-                            k4,
-                            var=df_place.rsl_er_max.ravel()**2)  #readvance temporal
-                        A5, var5 = reshape_decomp(
-                            k5,
-                            var=df_place.rsl_er_max.ravel()**2)  #readvance spatial
+                        A1, var1 = reshape_decomp(k1,var=df_place.rsl_er_max.ravel()**2)  #gia spatial
+                        A2, var2 = reshape_decomp(k2,var=df_place.rsl_er_max.ravel()**2)  #gia temporal
+                        A3, var3 = reshape_decomp(k3,var=df_place.rsl_er_max.ravel()**2)  #readvance spatial
+                        A4, var4 = reshape_decomp(k4,var=df_place.rsl_er_max.ravel()**2)  #readvance temporal
+                        A5, var5 = reshape_decomp(k5, var=df_place.rsl_er_max.ravel()**2)  #readvance spatial
 
                         da_A1 = make_dataarray(A1)
                         da_var1 = make_dataarray(var1)
@@ -1002,19 +1007,27 @@ def readv():
                         da_A5 = make_dataarray(A5)
                         da_var5 = make_dataarray(var5)
 
+                        da_A1.to_netcdf(f'output/{path_gen}_da_A1')
+                        da_var1.to_netcdf(f'output/{path_gen}_da_var1')
+                        da_A2.to_netcdf(f'output/{path_gen}_da_A2')
+                        da_var2.to_netcdf(f'output/{path_gen}_da_var2')
+                        da_A3.to_netcdf(f'output/{path_gen}_da_A3')
+                        da_var3.to_netcdf(f'output/{path_gen}_da_var3')
+                        da_A4.to_netcdf(f'output/{path_gen}_da_A4')
+                        da_var4.to_netcdf(f'output/{path_gen}_da_var4')
+                        da_A5.to_netcdf(f'output/{path_gen}_da_A5')
+                        da_var5.to_netcdf(f'output/{path_gen}_da_var5')
+
+
                         #################   PLOT DECOMPOSED KERNELS    ####################
                         ##################  --------------------	   ####################
 
                         fig, ax = plt.subplots(1, 6, figsize=(24, 4))
                         ax = ax.ravel()
                         da_A1[0, :, :].plot(ax=ax[0], cmap='RdBu_r')
-
                         da_A2[0, :, :].plot(ax=ax[1], cmap='RdBu_r')
-
                         da_A3[0, :, :].plot(ax=ax[2], cmap='RdBu_r')
-
                         da_A4[:, 0, 0].plot(ax=ax[3])
-
                         da_A5[:, 0, 0].plot(ax=ax[4])
 
                         fig.savefig(dirName + f'{path_gen}_decompkernels', transparent=True)
@@ -1034,29 +1047,29 @@ def readv():
                 df_likes = pd.read_csv(writepath)
 
             # make heatmap for upper vs. lower mantle viscosities at one lithosphere thickness
+            if plot_heatmap == "true":
+                if ice_model =='glac1d_':
+                    df_likes['um'] = [key.split('_')[2][3:] for key in df_likes.modelrun]
+                    df_likes['lm'] = [key.split('_')[3][2:] for key in df_likes.modelrun]
+                    df_likes['lith'] = [key.split('_')[1][1:3] for key in df_likes.modelrun]
+                    df_likes['icemodel'] = [key.split('_')[0] for key in df_likes.modelrun]
+                elif ice_model == 'd6g_h6g_':
+    #                 df_likes = df_likes.drop([36])
+                    df_likes['um'] = [key.split('_')[3][3:] for key in df_likes.modelrun]
+                    df_likes['lm'] = [key.split('_')[4][2:] for key in df_likes.modelrun]
+                    df_likes['lith'] = [key.split('_')[2][1:3] for key in df_likes.modelrun]
+                    df_likes['icemodel'] = [key.split('_l')[0] for key in df_likes.modelrun]
 
-            if ice_model =='glac1d_':
-                df_likes['um'] = [key.split('_')[2][3:] for key in df_likes.modelrun]
-                df_likes['lm'] = [key.split('_')[3][2:] for key in df_likes.modelrun]
-                df_likes['lith'] = [key.split('_')[1][1:3] for key in df_likes.modelrun]
-                df_likes['icemodel'] = [key.split('_')[0] for key in df_likes.modelrun]
-            elif ice_model == 'd6g_h6g_':
-#                 df_likes = df_likes.drop([36])
-                df_likes['um'] = [key.split('_')[3][3:] for key in df_likes.modelrun]
-                df_likes['lm'] = [key.split('_')[4][2:] for key in df_likes.modelrun]
-                df_likes['lith'] = [key.split('_')[2][1:3] for key in df_likes.modelrun]
-                df_likes['icemodel'] = [key.split('_l')[0] for key in df_likes.modelrun]
-
-            df_likes.lm = df_likes.lm.astype(float)
-            df_likes.um = df_likes.um.astype(float)
-            heatmap = df_likes.pivot_table(index='um', columns='lm', values='log_marginal_likelihood')
+                df_likes.lm = df_likes.lm.astype(float)
+                df_likes.um = df_likes.um.astype(float)
+                heatmap = df_likes.pivot_table(index='um', columns='lm', values='log_marginal_likelihood')
 
 
-            fig, ax = plt.subplots(1, 1, figsize=(6, 6))
-            sns.heatmap(heatmap,  cmap='coolwarm', ax=ax,  cbar_kws={'label': 'negative log likelihood'})
-            ax.set_title(f'{place} {ages[0]} - {ages[-1]} yrs \n {ice_model} : {df_likes.lith[0]} km lithosphere'); # (havsine)
+                fig, ax = plt.subplots(1, 1, figsize=(6, 6))
+                sns.heatmap(heatmap,  cmap='coolwarm', ax=ax,  cbar_kws={'label': 'negative log likelihood'})
+                ax.set_title(f'{place} {ages[0]} - {ages[-1]} yrs \n {ice_model} : {df_likes.lith[0]} km lithosphere'); # (havsine)
 
-            fig.savefig(dirName + f'{path_gen}_likelihood_heatmap', transparent=True)   # _havsine
+                fig.savefig(dirName + f'{path_gen}_likelihood_heatmap', transparent=True)   # _havsine
 
 if __name__ == '__main__':
     readv()
