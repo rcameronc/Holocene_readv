@@ -337,36 +337,15 @@ def readv():
                 print('---------------')
                 print(f'{modelrun} run number {i}')
 
-                if ice_model == 'glac1d_':
-                    # make prior RSL
-                    ds_area = one_mod(path,
-                        [ice_model + lith_thickness]).sel(modelrun=modelrun).rsl.sel(
-                            age=slice(tmax, tmin),
-                            lon=slice(df_place.lon.min() - 2,
-                                      df_place.lon.max() + 2),
-                            lat=slice(df_place.lat.min() - 2,
-                                      df_place.lat.max() + 2)).load().to_dataset().interp(
-                                          age=ds_readv.age, lon=ds_readv.lon, lat=ds_readv.lat)
+                ds_area = one_mod(path,[ice_model + lith_thickness]).sel(modelrun=modelrun).rsl
+                ds_area = ds_area.assign_coords({'lat':ds_area.lat.values[::-1]}).sel(
+                        age=slice(tmax, tmin),
+                        lon=slice(df_place.lon.min() - 2,
+                                  df_place.lon.max() + 2),
+                        lat=slice(df_place.lat.max() + 2,
+                                  df_place.lat.min() - 2)).load().to_dataset().interp(
+                                      age=ds_readv.age, lon=ds_readv.lon, lat=ds_readv.lat)
 
-                else:
-                    # make prior RSL
-                    ds_area = one_mod(path,
-                        [ice_model + lith_thickness]).sel(modelrun=modelrun).rsl.sel(
-                            age=slice(tmax, tmin),
-                            lon=slice(df_place.lon.min() - 2,
-                                      df_place.lon.max() + 2),
-                            lat=slice(df_place.lat.min() - 2,
-                                      df_place.lat.max() + 2)).load().to_dataset().interp(
-                                          age=ds_readv.age, lon=ds_readv.lon, lat=ds_readv.lat)
-
-                    ds_area = one_mod(path, [ice_model + lith_thickness]).sel(modelrun=modelrun).rsl
-                    ds_area = ds_area.assign_coords({'lat':ds_area.lat.values[::-1]}).sel(
-                                            age=slice(tmax, tmin),
-                                            lon=slice(df_place.lon.min() - 2,
-                                                      df_place.lon.max() + 2),
-                                            lat=slice(df_place.lat.max() + 2,
-                                                      df_place.lat.min() - 2)).load().to_dataset().interp(
-                                            age=ds_readv.age, lon=ds_readv.lon, lat=ds_readv.lat)
 
                 #sample each model at points where we have RSL data
                 def ds_select(ds):
@@ -614,7 +593,7 @@ def readv():
                     print('model minimized, time=', time.time() - start)
 
                     # output space
-                    nout = 50
+                    nout = 70
                     lat = np.linspace(min(ds_area.lat), max(ds_area.lat), nout)
                     lon = np.linspace(min(ds_area.lon), max(ds_area.lon), nout)
                     ages = ages_lgm[(ages_lgm < tmax) & (ages_lgm > tmin)]
