@@ -13,16 +13,9 @@ import scipy.io as io
 from itertools import product
 import glob
 import time
-import os
 
 # plotting
-from matplotlib import pyplot as plt
-from matplotlib import colors
 from matplotlib.colors import Normalize
-import cartopy.crs as ccrs
-import cartopy.feature as cfeature
-from matplotlib.lines import Line2D
-import seaborn as sns
 
 # gpflow
 import gpflow as gpf
@@ -30,7 +23,7 @@ from gpflow.utilities import print_summary
 from gpflow.logdensities import multivariate_normal
 from gpflow.kernels import Kernel
 from gpflow.mean_functions import MeanFunction
-from typing import Optional, Tuple, List
+from typing import Optional, Tuple
 from gpflow.config import default_jitter
 
 # tensorflow
@@ -228,6 +221,7 @@ def readv():
 
     ds_sliced1 = one_mod(path1,[ice_model[0]])
     ds_sliced2 = one_mod(path2, [ice_model[1]])
+    ds_sliced2 = ds_sliced2.interp(age=ds_sliced1.age)
 
     ds_sliced_in = xr.concat([ds_sliced1, ds_sliced2], dim='modelrun')
 
@@ -237,10 +231,10 @@ def readv():
                       df_place.lon.max() + 2),
             lat=slice(df_place.lat.max() + 2,
                       df_place.lat.min() - 2))
-    ds_area = ds_sliced.mean(dim='modelrun').load().to_dataset().interp(
-                                            age=ds_readv.age, lon=ds_readv.lon, lat=ds_readv.lat)
-    ds_areastd = ds_sliced.std(dim='modelrun').load().to_dataset().interp(
-                                            age=ds_readv.age, lon=ds_readv.lon, lat=ds_readv.lat)
+    ds_area = ds_sliced.mean(dim='modelrun').load().chunk((-1,-1,-1)).interp(
+                                            age=ds_readv.age, lon=ds_readv.lon, lat=ds_readv.lat).to_dataset()
+    ds_areastd = ds_sliced.std(dim='modelrun').load().chunk((-1,-1,-1)).interp(
+                                            age=ds_readv.age, lon=ds_readv.lon, lat=ds_readv.lat).to_dataset()
 
     #sample each model at points where we have RSL data
     def ds_select(ds):

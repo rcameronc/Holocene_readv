@@ -13,16 +13,9 @@ import scipy.io as io
 from itertools import product
 import glob
 import time
-import os
 
 # plotting
-from matplotlib import pyplot as plt
-from matplotlib import colors
 from matplotlib.colors import Normalize
-import cartopy.crs as ccrs
-import cartopy.feature as cfeature
-from matplotlib.lines import Line2D
-import seaborn as sns
 
 # gpflow
 import gpflow as gpf
@@ -30,7 +23,7 @@ from gpflow.utilities import print_summary
 from gpflow.logdensities import multivariate_normal
 from gpflow.kernels import Kernel
 from gpflow.mean_functions import MeanFunction
-from typing import Optional, Tuple, List
+from typing import Optional, Tuple
 from gpflow.config import default_jitter
 
 # tensorflow
@@ -66,8 +59,8 @@ def readv():
     tmax = int(args.tmax)
     tmin = int(args.tmin)
     place = args.place
-    
-    ice_model =  ['d6g_h6g_', 'glac1d_'] 
+
+    ice_model =  ['d6g_h6g_', 'glac1d_']
 
     locs = {'europe': [-20, 15, 35, 70],
             'atlantic':[-85,50, 25, 73],
@@ -175,63 +168,73 @@ def readv():
     #################### ---------------------- #######################
 
     #Use either glac1d or ICE6G
-    def build_dataset(path, ice_model):
-        """download model runs from local directory."""
-        files = f'{path + ice_model}/*.nc'
-        basefiles = glob.glob(files)
-        modelrun = [
-           key.split('output_', 1)[1][:-3].replace('.', '_')
-        for key in basefiles]
-       dss = xr.open_mfdataset(files,
-                            chunks=None,
-                            concat_dim='modelrun',
-                            combine='nested')
-       lats, lons, times = dss.LAT.values[0], dss.LON.values[
-           0], dss.TIME.values[0]
-       ds = dss.drop(['LAT', 'LON', 'TIME'])
-       ds = ds.assign_coords(lat=lats,
-                          lon=lons,
-                          time=times,
-                          modelrun=modelrun).rename({
-                              'time': 'age',
-                              'RSL': 'rsl'})
-       return ds
 
-   def one_mod(path, ice_model):
-       """Organize model runs into xarray dataset."""
-       path1 = path + f'{ice_model[0]}/output_'
-       path2 = path + f'{ice_model[1]}/output_'
+    def build_dataset(path, model):
+                """download model runs from local directory."""
+                path = path
+                files = f'{path}*.nc'
+                basefiles = glob.glob(files)
+                modelrun = [
+                    key.split('output_', 1)[1][:-3].replace('.', '_')
+                    for key in basefiles
+                ]
+                dss = xr.open_mfdataset(files,
+                                        chunks=None,
+                                        concat_dim='modelrun',
+                                        combine='nested')
+                lats, lons, times = dss.LAT.values[0], dss.LON.values[
+                    0], dss.TIME.values[0]
+                ds = dss.drop(['LAT', 'LON', 'TIME'])
+                ds = ds.assign_coords(lat=lats,
+                                      lon=lons,
+                                      time=times,
+                                      modelrun=modelrun).rename({
+                                          'time': 'age',
+                                          'RSL': 'rsl'
+                                      })
+                return ds
 
-       ds1 = build_dataset(path, ice_model[0])
-       ds2 = build_dataset(path, ice_model[1])
-       ds2 = ds2.interp(age=ds1.age, lat=ds1.lat, lon=ds1.lon)
+    def one_mod(path, names):
+        """Organize model runs into xarray dataset."""
+        ds1 = build_dataset(path, names[0])
+        names = names[1:]
+        ds = ds1.chunk({'lat': 10, 'lon': 10})
+        for i in range(len(names)):
+            temp = build_dataset(names[i])
+            temp1 = temp.interp_like(ds1)
+            temp1['modelrun'] = temp['modelrun']
+            ds = xr.concat([ds, temp1], dim='modelrun')
+        ds['age'] = ds['age'] * 1000
+        ds = ds.roll(lon=256, roll_coords=True)
+        ds.coords['lon'] = pd.DataFrame((ds.lon[ds.lon >= 180] - 360)- 0.12 ) \
+                                        .append(pd.DataFrame(ds.lon[ds.lon < 180]) + 0.58) \
+                                        .reset_index(drop=True).squeeze()
+        ds.coords['lat'] = ds.lat[::-1]
+        ds = ds.swap_dims({'dim_0': 'lon'}).drop('dim_0')
+        return ds
 
-       ds = xr.concat([ds1, ds2], dim='modelrun')
-
-       ds['age'] = ds['age'] * 1000
-       ds = ds.roll(lon=256, roll_coords=True)
-       ds.coords['lon'] = pd.DataFrame((ds.lon[ds.lon >= 180] - 360)- 0.12 ) \
-                            .append(pd.DataFrame(ds.lon[ds.lon < 180]) + 0.58) \
-                            .reset_index(drop=True).squeeze()
-       ds.coords['lat'] = ds.lat[::-1]
-       ds = ds.swap_dims({'dim_0': 'lon'}).drop('dim_0')
-
-       return ds
 
     #make composite of a bunch of GIA runs, i.e. GIA prior
     # path = f'data/{ice_model}/output_'
-    path = f'data/'
-    ds_sliced_in = one_mod(path,ice_model).rsl
-    ds_sliced = ds_sliced_in.assign_coords({'lat':ds_sliced_in.lat.values[::-1]}).sel(
+    path1 = 'data/glac1d_/output_'
+    path2 = 'data/d6g_h6g_/output_'
+
+    ds_sliced1 = one_mod(path1,[ice_model[0]])
+    ds_sliced2 = one_mod(path2, [ice_model[1]])
+    ds_sliced2 = ds_sliced2.interp(age=ds_sliced1.age)
+
+    ds_sliced_in = xr.concat([ds_sliced1, ds_sliced2], dim='modelrun')
+
+    ds_sliced = ds_sliced_in.rsl.assign_coords({'lat':ds_sliced_in.lat.values[::-1]}).sel(
             age=slice(tmax, tmin),
             lon=slice(df_place.lon.min() - 2,
                       df_place.lon.max() + 2),
             lat=slice(df_place.lat.max() + 2,
                       df_place.lat.min() - 2))
-    ds_area = ds_sliced.mean(dim='modelrun').load().to_dataset().interp(
-                                            age=ds_readv.age, lon=ds_readv.lon, lat=ds_readv.lat)
-    ds_areastd = ds_sliced.std(dim='modelrun').load().to_dataset().interp(
-                                            age=ds_readv.age, lon=ds_readv.lon, lat=ds_readv.lat)
+    ds_area = ds_sliced.mean(dim='modelrun').load().chunk((-1,-1,-1)).interp(
+                                            age=ds_readv.age, lon=ds_readv.lon, lat=ds_readv.lat).to_dataset()
+    ds_areastd = ds_sliced.std(dim='modelrun').load().chunk((-1,-1,-1)).interp(
+                                            age=ds_readv.age, lon=ds_readv.lon, lat=ds_readv.lat).to_dataset()
 
     #sample each model at points where we have RSL data
     def ds_select(ds):
@@ -383,7 +386,7 @@ def readv():
                 """
                 if X2 is None:
                     X2 = X
-                dist = da.square(self.haversine_dist(X, X2) / self.lengthscale)
+                dist = tf.square(self.haversine_dist(X, X2) / self.lengthscale)
         #             dist = tf.convert_to_tensor(dist)
                 return dist
 
