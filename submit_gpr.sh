@@ -10,16 +10,16 @@ do
 for lith in l96C l71C
 do
 
-for lm in # 5 7 8 9 10 15 20 30 40 50
+for lm in 3 # 5 7 8 9 10 15 20 30 40 50
 do
 
-for um in p2 p3 p4 p5
+for um in p2 # p3 p4 p5
 do
 
 for tmax in 12010
 do
 
-for tmin in 9990 5990 1990
+for tmin in 8490 # 5990 1990
 do
 
 for place in fennoscandia # europe

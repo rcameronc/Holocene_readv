@@ -58,7 +58,7 @@ def readv():
     #################### ---------------------- #######################
 
     parser = argparse.ArgumentParser(description='import vars via c-line')
-    parser.add_argument("--tmax", default="5010")
+    parser.add_argument("--tmax", default="12010")
     parser.add_argument("--tmin", default="3990")
     parser.add_argument("--place", default="fennoscandia")
 
@@ -175,54 +175,52 @@ def readv():
     #################### ---------------------- #######################
 
     #Use either glac1d or ICE6G
-    def build_dataset(path, model):
+    def build_dataset(path, ice_model):
         """download model runs from local directory."""
-        path = path
-        files = f'{path + model}*.nc'
+        files = f'{path + ice_model}/*.nc'
         basefiles = glob.glob(files)
         modelrun = [
-            key.split('output_', 1)[1][:-3].replace('.', '_')
-            for key in basefiles]
-        dss = xr.open_mfdataset(files,
-                                chunks=None,
-                                concat_dim='modelrun',
-                                combine='nested')
-        lats, lons, times = dss.LAT.values[0], dss.LON.values[
-            0], dss.TIME.values[0]
-        ds = dss.drop(['LAT', 'LON', 'TIME'])
-        ds = ds.assign_coords(lat=lats,
-                              lon=lons,
-                              time=times,
-                              modelrun=modelrun).rename({
-                                  'time': 'age',
-                                  'RSL': 'rsl'})
-        return ds
+           key.split('output_', 1)[1][:-3].replace('.', '_')
+        for key in basefiles]
+       dss = xr.open_mfdataset(files,
+                            chunks=None,
+                            concat_dim='modelrun',
+                            combine='nested')
+       lats, lons, times = dss.LAT.values[0], dss.LON.values[
+           0], dss.TIME.values[0]
+       ds = dss.drop(['LAT', 'LON', 'TIME'])
+       ds = ds.assign_coords(lat=lats,
+                          lon=lons,
+                          time=times,
+                          modelrun=modelrun).rename({
+                              'time': 'age',
+                              'RSL': 'rsl'})
+       return ds
 
-    def one_mod(path, names):
-        """Organize model runs into xarray dataset."""
-        ds1 = build_dataset(path, names[0])
-        names = names[1:]
-        ds = ds1.chunk({'lat': 10, 'lon': 10})
-        for i in range(len(names)):
-            temp = build_dataset(path, names[i])
-            temp1 = temp.interp(age=ds1.age, lat=ds1.lat, lon=ds1.lon)
-    #         temp1['modelrun'] = temp['modelrun']
-            ds = xr.concat([ds, temp1], dim='modelrun')
-        ds['age'] = ds['age'] * 1000
-        ds = ds.roll(lon=256, roll_coords=True)
-        ds.coords['lon'] = pd.DataFrame((ds.lon[ds.lon >= 180] - 360)- 0.12 ) \
-                                .append(pd.DataFrame(ds.lon[ds.lon < 180]) + 0.58) \
-                                .reset_index(drop=True).squeeze()
-        ds.coords['lat'] = ds.lat[::-1]
-        ds = ds.swap_dims({'dim_0': 'lon'}).drop('dim_0')
-        return ds
+   def one_mod(path, ice_model):
+       """Organize model runs into xarray dataset."""
+       path1 = path + f'{ice_model[0]}/output_'
+       path2 = path + f'{ice_model[1]}/output_'
 
+       ds1 = build_dataset(path, ice_model[0])
+       ds2 = build_dataset(path, ice_model[1])
+       ds2 = ds2.interp(age=ds1.age, lat=ds1.lat, lon=ds1.lon)
+
+       ds = xr.concat([ds1, ds2], dim='modelrun')
+
+       ds['age'] = ds['age'] * 1000
+       ds = ds.roll(lon=256, roll_coords=True)
+       ds.coords['lon'] = pd.DataFrame((ds.lon[ds.lon >= 180] - 360)- 0.12 ) \
+                            .append(pd.DataFrame(ds.lon[ds.lon < 180]) + 0.58) \
+                            .reset_index(drop=True).squeeze()
+       ds.coords['lat'] = ds.lat[::-1]
+       ds = ds.swap_dims({'dim_0': 'lon'}).drop('dim_0')
+
+       return ds
 
     #make composite of a bunch of GIA runs, i.e. GIA prior
-    #         path = f'data/{ice_model}/output_'
-    path = f'/Users/rogercreel/Desktop/readv_files/output_'
-
-
+    # path = f'data/{ice_model}/output_'
+    path = f'data/'
     ds_sliced_in = one_mod(path,ice_model).rsl
     ds_sliced = ds_sliced_in.assign_coords({'lat':ds_sliced_in.lat.values[::-1]}).sel(
             age=slice(tmax, tmin),
@@ -528,22 +526,16 @@ def readv():
     ##################  --------------------	 ######################
 
     path_gen = f'{ages[0]}_{ages[-1]}_modelaverage_{place}'
-#     da_zp.to_netcdf('output/' + path_gen + '_dazp')
-#     da_giapriorinterp.to_netcdf('output/' + path_gen + '_giaprior')
-#     da_priorplusgpr.to_netcdf('output/' + path_gen + '_posterior')
-#     da_varp.to_netcdf('output/' + path_gen + '_gpvariance')
-    da_priorplusgpr.to_netcdf('/Users/rogercreel/Desktop/' + path_gen + '_posterior')
-
-    ##################		  PLOT  MODELS 		#######################
-    ##################  --------------------	 ######################
+    da_zp.to_netcdf('output/' + path_gen + '_dazp')
+    da_giapriorinterp.to_netcdf('output/' + path_gen + '_giaprior')
+    da_priorplusgpr.to_netcdf('output/' + path_gen + '_posterior')
+    da_varp.to_netcdf('output/' + path_gen + '_gpvariance')
 
     #store log likelihood in dataframe
     df_out = pd.DataFrame({'modelrun': 'average_likelihood',
                      'log_marginal_likelihood': loglikelist})
 
-
-#     writepath = f'output/{path_gen}_loglikelihood'
-    writepath = f'/Users/rogercreel/Desktop/readv_files/{path_gen}_loglikelihood'
+    writepath = f'output/{path_gen}_loglikelihood'
 
     df_out.to_csv(writepath, index=False)
     df_likes = pd.read_csv(writepath)
