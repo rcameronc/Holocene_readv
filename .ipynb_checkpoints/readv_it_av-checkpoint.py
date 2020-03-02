@@ -51,16 +51,16 @@ def readv():
     #################### ---------------------- #######################
 
     parser = argparse.ArgumentParser(description='import vars via c-line')
+    parser.add_argument("--mod", default="glac1d_")
     parser.add_argument("--tmax", default="12010")
     parser.add_argument("--tmin", default="3990")
     parser.add_argument("--place", default="fennoscandia")
 
     args = parser.parse_args()
+    ice_model = args.mod
     tmax = int(args.tmax)
     tmin = int(args.tmin)
     place = args.place
-
-    ice_model =  ['d6g_h6g_', 'glac1d_']
 
     locs = {'europe': [-20, 15, 35, 70],
             'atlantic':[-85,50, 25, 73],
@@ -215,15 +215,12 @@ def readv():
 
 
     #make composite of a bunch of GIA runs, i.e. GIA prior
-    # path = f'data/{ice_model}/output_'
-    path1 = 'data/glac1d_/output_'
-    path2 = 'data/d6g_h6g_/output_'
+    path = f'data/{ice_model}/output_'
 
-    ds_sliced1 = one_mod(path1,[ice_model[0]])
-    ds_sliced2 = one_mod(path2, [ice_model[1]])
-    ds_sliced2 = ds_sliced2.interp(age=ds_sliced1.age)
-
-    ds_sliced_in = xr.concat([ds_sliced1, ds_sliced2], dim='modelrun')
+    ds_sliced_in = one_mod(path,[ice_model])
+#     ds_sliced2 = one_mod(path2, [ice_model[1]])
+#     ds_sliced2 = ds_sliced2.interp(age=ds_sliced1.age)
+#     ds_sliced_in = xr.concat([ds_sliced1, ds_sliced2], dim='modelrun')
 
     ds_sliced = ds_sliced_in.rsl.assign_coords({'lat':ds_sliced_in.lat.values[::-1]}).sel(
             age=slice(tmax, tmin),
