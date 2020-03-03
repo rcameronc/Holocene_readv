@@ -93,11 +93,11 @@ def readv():
                          'lat', 'lon', 'rsl', 'rsl_er_max', 'age']]
     
     #prescribe present-day RSL to zero
-    preslocs = df_place.groupby(['lat', 'lon'])[['rsl', 'rsl_er_max', 'age']].nunique().reset_index()[::2]
-    preslocs['rsl'] = 0.2
-    preslocs['rsl_er_max'] = 0.1
-    preslocs['age'] = 200
-    df_place = pd.concat([df_place, preslocs]).reset_index(drop=True)
+#     preslocs = df_place.groupby(['lat', 'lon'])[['rsl', 'rsl_er_max', 'age']].nunique().reset_index()[::2]
+#     preslocs['rsl'] = 0.2
+#     preslocs['rsl_er_max'] = 0.2
+#     preslocs['age'] = 200
+#     df_place = pd.concat([df_place, preslocs]).reset_index(drop=True)
 
     ####################  Make 3D fingerprint  #######################
     #################### ---------------------- #######################
@@ -225,9 +225,6 @@ def readv():
     path = f'data/{ice_model}/output_'
 
     ds_sliced_in = one_mod(path,[ice_model])
-#     ds_sliced2 = one_mod(path2, [ice_model[1]])
-#     ds_sliced2 = ds_sliced2.interp(age=ds_sliced1.age)
-#     ds_sliced_in = xr.concat([ds_sliced1, ds_sliced2], dim='modelrun')
 
     ds_sliced = ds_sliced_in.rsl.assign_coords({'lat':ds_sliced_in.lat.values[::-1]}).sel(
             age=slice(tmax, tmin),
