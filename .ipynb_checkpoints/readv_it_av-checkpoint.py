@@ -525,7 +525,7 @@ def readv():
     ##################	  	 SAVE NETCDFS 	 	#######################
     ##################  --------------------	 ######################
 
-    path_gen = f'{ages[0]}_{ages[-1]}_modelaverage_{place}'
+    path_gen = f'{ice_model}{ages[0]}_{ages[-1]}_modelaverage_{place}'
     da_zp.to_netcdf('output/' + path_gen + '_dazp')
     da_giapriorinterp.to_netcdf('output/' + path_gen + '_giaprior')
     da_priorplusgpr.to_netcdf('output/' + path_gen + '_posterior')
