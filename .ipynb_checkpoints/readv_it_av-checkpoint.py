@@ -256,7 +256,7 @@ def readv():
     def run_gpr():
 
         Data = Tuple[tf.Tensor, tf.Tensor]
-        likelihood = df_place.rsl_er_max.ravel()**2 # + df_place.rsl_giaprior_std.ravel()**2  # here we define likelihood
+        likelihood = df_place.rsl_er_max.ravel()**2 + df_place.rsl_giaprior_std.ravel()**2  # here we define likelihood
 
         class GPR_diag(gpf.models.GPModel):
             r"""
@@ -519,15 +519,16 @@ def readv():
         # add total prior RSL back into GPR
         da_priorplusgpr = da_zp + da_giapriorinterp
 
-        return ages, da_zp, da_giapriorinterp, da_priorplusgpr, da_varp, loglikelist
+        return ages, da_zp, da_giapriorinterpstd, da_giapriorinterp, da_priorplusgpr, da_varp, loglikelist
 
-    ages, da_zp, da_giapriorinterp, da_priorplusgpr, da_varp, loglikelist = run_gpr()
+    ages, da_zp, da_giapriorinterpstd, da_giapriorinterp, da_priorplusgpr, da_varp, loglikelist = run_gpr()
     ##################	  	 SAVE NETCDFS 	 	#######################
     ##################  --------------------	 ######################
 
     path_gen = f'{ice_model}{ages[0]}_{ages[-1]}_modelaverage_{place}'
     da_zp.to_netcdf('output/' + path_gen + '_dazp')
     da_giapriorinterp.to_netcdf('output/' + path_gen + '_giaprior')
+    da_giapriorinterpstd.to_netcdf('output/' + path_gen + '_giapriorstd')
     da_priorplusgpr.to_netcdf('output/' + path_gen + '_posterior')
     da_varp.to_netcdf('output/' + path_gen + '_gpvariance')
 
