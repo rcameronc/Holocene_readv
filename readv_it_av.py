@@ -91,6 +91,13 @@ def readv():
                      & (dfind.lat > extent[2])
                      & (dfind.lat < extent[3])][[
                          'lat', 'lon', 'rsl', 'rsl_er_max', 'age']]
+    
+    #prescribe present-day RSL to zero
+    preslocs = df_place.groupby(['lat', 'lon'])[['rsl', 'rsl_er_max', 'age']].nunique().reset_index()[::2]
+    preslocs['rsl'] = 0
+    preslocs['rsl_er_max'] = 0
+    preslocs['age'] = 0
+    df_place = pd.concat([df_place, preslocs]).reset_index(drop=True)
 
     ####################  Make 3D fingerprint  #######################
     #################### ---------------------- #######################
