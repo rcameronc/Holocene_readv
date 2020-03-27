@@ -452,20 +452,18 @@ def readv():
                     def normalize(df):
                         return np.array((df - df.mean()) / df.std()).reshape(len(df), 1)
 
-
                     def denormalize(y_pred, df):
                         return np.array((y_pred * df.std()) + df.mean())
 
 
                     def bounded_parameter(low, high, param):
                         """Make parameter tfp Parameter with optimization bounds."""
-                        affine = tfb.AffineScalar(shift=tf.cast(low, tf.float64),
-                                                  scale=tf.cast(high - low, tf.float64))
-                        sigmoid = tfb.Sigmoid()
-                        logistic = tfb.Chain([affine, sigmoid])
-                        parameter = gpf.Parameter(param, transform=logistic, dtype=tf.float64)
-                        return parameter
 
+                        sigmoid = tfb.Sigmoid(low=tf.cast(low, tf.float64), 
+                                              high=tf.cast(high, tf.float64),
+                                                             name='sigmoid')
+                        parameter = gpf.Parameter(param, transform=sigmoid, dtype=tf.float64)
+                        return parameter
 
                     class HaversineKernel_Matern52(gpf.kernels.Matern52):
                         """

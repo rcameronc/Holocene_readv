@@ -52,7 +52,7 @@ def readv():
 
     parser = argparse.ArgumentParser(description='import vars via c-line')
     parser.add_argument("--mod", default="glac1d_")
-    parser.add_argument("--tmax", default="12010")
+    parser.add_argument("--tmax", default="5010")
     parser.add_argument("--tmin", default="3990")
     parser.add_argument("--place", default="fennoscandia")
 
