@@ -6,6 +6,7 @@ dependencies:
   - numpy
   - pandas
   - xarray=0.14.0
+  - xesmf
   - scipy
   - matplotlib
   - cartopy
@@ -13,13 +14,15 @@ dependencies:
   - pip
   - netcdf4
   - dask
-  - jupyter
   - jupyterlab
-  - memory_profiler
-  - seaborn
-  - cudatoolkit=10.1
-  - pip:
+
+- pip:
+    - df2gspread
+    - oauth2client
+    - gspread
     - tensorflow==2.1.0
-    - git+https://github.com/GPflow/GPflow.git@develop#egg=gpflow
+    - gpflow==2.0.0
+    # - git+https://github.com/GPflow/GPflow.git@develop#egg=gpflow
+  #   - git+https://github.com/GPflow/GPflowOpt.git#egg=gpflowopt
 
 

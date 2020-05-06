@@ -194,7 +194,7 @@ def readv():
 
 
     Data = Tuple[tf.Tensor, tf.Tensor]
-    likelihood = df_place.rsl_er_max.ravel()**2 + df_place.rsl_giaprior_std.ravel()**2  # here we define likelihood
+    likelihood = (df_place.rsl_er_max.ravel()/2)**2 + df_place.rsl_giaprior_std.ravel()**2  # here we define likelihood
     class GPR_diag(gpf.models.GPModel):
         r"""
         Gaussian Process Regression.
@@ -238,41 +238,35 @@ def readv():
             log_prob = multivariate_normal(y, m, L)
             return tf.reduce_sum(log_prob)
 
-        def predict_f(self,
-                      predict_at: tf.Tensor,
-                      full_cov: bool = False,
-                      full_output_cov: bool = False):
+        def predict_f(
+            self, xnew: InputData,full_cov: bool = False, full_output_cov: bool = False
+        ):
+
             r"""
             This method computes predictions at X \in R^{N \x D} input points
+
             .. math::
                 p(F* | Y)
+
             where F* are points on the GP at new data points, Y are noisy observations at training data points.
             """
             x_data, y_data = self.data
             err = y_data - self.mean_function(x_data)
 
             kmm = self.kernel(x_data)
-            knn = self.kernel(predict_at, full=full_cov)
-            kmn = self.kernel(x_data, predict_at)
+            knn = self.kernel(xnew, full_cov=full_cov)
+            kmn = self.kernel(x_data, xnew)
 
             num_data = x_data.shape[0]
 
-            s = tf.linalg.diag(tf.convert_to_tensor(
-                self.likelihood.variance))  #changed from normal GPR
-
-            k_diag = tf.linalg.diag_part(kmm)
-            s_diag = tf.convert_to_tensor(self.likelihood.variance)
-            jitter = tf.cast(tf.fill([num_data], default_jitter()),
-                             'float64')  # stabilize K matrix w/jitter
-            ks = tf.linalg.set_diag(kmm, k_diag + s_diag + jitter)
-            L = tf.linalg.cholesky(ks)
+            s = tf.linalg.diag(tf.convert_to_tensor(self.likelihood.variance))  #changed from normal GPR
 
             conditional = gpf.conditionals.base_conditional
             f_mean_zero, f_var = conditional(
                 kmn, kmm + s, knn, err, full_cov=full_cov,
                 white=False)  # [N, P], [N, P] or [P, N, N]
 
-            f_mean = f_mean_zero + self.mean_function(predict_at)
+            f_mean = f_mean_zero + self.mean_function(xnew)
             return f_mean, f_var
 
 
@@ -300,14 +294,14 @@ def readv():
         """
         def __init__(
             self,
-            lengthscale=1.0,
+            lengthscales=1.0,
             variance=1.0,
             active_dims=None,
         ):
             super().__init__(
                 active_dims=active_dims,
                 variance=variance,
-                lengthscale=lengthscale,
+                lengthscales=lengthscales,
             )
 
         def haversine_dist(self, X, X2):
@@ -328,7 +322,7 @@ def readv():
             """
             if X2 is None:
                 X2 = X
-            dist = tf.square(self.haversine_dist(X, X2) / self.lengthscale)
+            dist = tf.square(self.haversine_dist(X, X2) / self.lengthscales)
 
             return dist
 
@@ -343,25 +337,25 @@ def readv():
 
     #define kernels  with bounds
     k1 = HaversineKernel_Matern32(active_dims=[0, 1])
-    # k1.lengthscale = bounded_parameter(100, 60000, 300)  #hemispheric space
+    k1.lengthscales = bounded_parameter(100, 60000, 300)  #hemispheric space
     # k1.variance = bounded_parameter(0.1, 100, 2)
 
     k2 = HaversineKernel_Matern32(active_dims=[0, 1])
-    # k2.lengthscale = bounded_parameter(1, 6000, 10)  #GIA space
+    k2.lengthscales = bounded_parameter(1, 6000, 10)  #GIA space
     # k2.variance = bounded_parameter(0.1, 100, 2)
 
     k3 = gpf.kernels.Matern32(active_dims=[2])  #GIA time
-    # k3.lengthscale = bounded_parameter(0.1, 20000, 1000)
+    k3.lengthscales = bounded_parameter(0.1, 20000, 1000)
     # k3.variance = bounded_parameter(0.1, 100, 1)
 
     k4 = gpf.kernels.Matern32(active_dims=[2], lengthscale = 1000)  #shorter time
-    # k4.lengthscale = bounded_parameter(1, 6000, 100)
+    k4.lengthscales = bounded_parameter(1, 6000, 100)
     # k4.variance = bounded_parameter(0.1, 100, 1)
 
     k5 = gpf.kernels.White(active_dims=[2])
     # k5.variance = bounded_parameter(0.01, 100, 1)
 
-    kernel = (k1 * k3)  + k5 # + (k4 * k2)
+    kernel = (k1 * k3)  + k5 + (k4 * k2)
 
     #build & train model
     m = GPR_diag((X, RSL), kernel=kernel, likelihood=likelihood)
