@@ -2,7 +2,7 @@
 
 # #!/anaconda3/envs/gpflow6_0/env/bin/python
 
-from memory_profiler import profile
+# from memory_profiler import profile
 
 # generic
 import numpy as np
@@ -15,6 +15,7 @@ import time
 
 
 # gpflow
+import gpflow
 import gpflow as gpf
 from gpflow.utilities import print_summary
 from gpflow.logdensities import multivariate_normal
@@ -24,16 +25,23 @@ from typing import Optional, Tuple
 from gpflow.config import default_jitter, default_float
 
 
+from gpflow.utilities import print_summary, positive
+from gpflow.models.model import InputData, RegressionData, MeanAndVariance, GPModel
+from gpflow.base import Parameter
+from gpflow.models.training_mixins import InternalDataTrainingLossMixin
+
+
+
 # tensorflow
 import tensorflow as tf
 from tensorflow_probability import bijectors as tfb
 import argparse
 
-@profile
+# @profile
 
 def readv():
-    
-    
+
+
     parser = argparse.ArgumentParser(description='import vars via c-line')
     parser.add_argument("--mod", default='d6g_h6g_')
     parser.add_argument("--lith", default='l71C')
@@ -51,7 +59,7 @@ def readv():
     tmax = int(args.tmax)
     tmin = int(args.tmin)
     place = args.place
-    
+
 
     ages_lgm = np.arange(100, 26000, 100)[::-1]
     ages = np.arange(tmin, tmax, 100)[::-1]
@@ -90,11 +98,15 @@ def readv():
     #prescribe present-day RSL to zero
     preslocs = df_place.groupby(['lat', 'lon'])[['rsl', 'rsl_er_max', 'age']].nunique().reset_index()[::2]
     preslocs['rsl'] = 0.01
+    preslocs['rsl_er'] = 0.01
     preslocs['rsl_er_max'] = 0.01
-    preslocs['age'] = 100
+    preslocs['rsl_er_min'] = 0.01
+    preslocs['age_er'] = 1
+    preslocs['age_er_max'] = 1
+    preslocs['age_er_min'] = 1
+    preslocs['age'] = 10
     df_place = pd.concat([df_place, preslocs]).reset_index(drop=True)
-    
-    
+
     ####################  Make xarray template  #######################
     #################### ---------------------- #######################
 
@@ -108,7 +120,7 @@ def readv():
     template.coords['lon'] = pd.DataFrame((template.lon[template.lon >= 180] - 360)- 0.12) \
                             .append(pd.DataFrame(template.lon[template.lon < 180]) + 0.58) \
                             .reset_index(drop=True).squeeze()
-    ds_template = template.swap_dims({'dim_0': 'lon'}).drop('dim_0').sel(lon=slice(extent[0] + 180 - 2, 
+    ds_template = template.swap_dims({'dim_0': 'lon'}).drop('dim_0').sel(lon=slice(extent[0] + 180 - 2,
                                                                                    extent[1] + 180 + 2),
                                                                          lat=slice(extent[3] + 2,
                                                                                    extent[2] - 2)).rsl
@@ -126,7 +138,7 @@ def readv():
     df_place = pd.concat([df_place, preslocs, morepreslocs]).reset_index(drop=True)
     df_place.shape
 
-    
+
 
     ####################    Load GIA datasets   #######################
     #################### ---------------------- #######################
@@ -154,10 +166,17 @@ def readv():
                                         .reset_index(drop=True).squeeze()
         ds = ds.swap_dims({'dim_0': 'lon'}).drop('dim_0')
 
+        print(ds)
+        print(extent[0] - 2, extent[1] + 2, extent[3] + 2, extent[2] - 2)
+
         #slice dataset to location
-        ds = ds.rsl.sel(age=slice(ages[0], ages[-1]),
-                lon=slice(extent[0] - 2, extent[1] + 2),
-                lat=slice(extent[3] + 2, extent[2] - 2))
+        #ds = ds.rsl.sel(age=slice(ages[0], ages[-1]),
+         #       lon=slice(extent[0] - 2, extent[1] + 2),
+          #      lat=slice(extent[3] + 2, extent[2] - 2))
+
+        ds = ds.rsl.sel(age=slice(ages[0], ages[-1]))
+        # ds = ds.sel(lon=slice(extent[0] - 2, extent[1] + 2))
+        ds = ds.sel(lat=slice(extent[3] + 2, extent[2] - 2))
 
         #add present-day RSL at zero to the GIA model
         ds_zeros = xr.zeros_like(ds)[:,0] + 0.01
@@ -166,7 +185,7 @@ def readv():
         ds = xr.concat([ds, ds_zeros], 'age')
 
         return ds
-    
+
     ds = make_mod(ice_model, lith)
 
     #make mean of runs
@@ -188,14 +207,14 @@ def readv():
 
     print('number of datapoints = ', df_place.shape)
 
-    ##################	  RUN GP REGRESSION 	#######################
-    ##################  --------------------	 ######################
+    ##################    RUN GP REGRESSION     #######################
+    ##################  --------------------     ######################
     start = time.time()
 
 
-    Data = Tuple[tf.Tensor, tf.Tensor]
-    likelihood = (df_place.rsl_er_max.ravel()/2)**2 + df_place.rsl_giaprior_std.ravel()**2  # here we define likelihood
-    class GPR_diag(gpf.models.GPModel):
+
+
+    class GPR_diag_(gpf.models.GPModel):
         r"""
         Gaussian Process Regression.
         This is a vanilla implementation of GP regression with a pointwise Gaussian
@@ -210,7 +229,7 @@ def readv():
                      data: Data,
                      kernel: Kernel,
                      mean_function: Optional[MeanFunction] = None,
-                     likelihood=likelihood):
+                     likelihood=noise_variance):
             likelihood = gpf.likelihoods.Gaussian(variance=likelihood)
             _, y_data = data
             super().__init__(kernel,
@@ -238,35 +257,41 @@ def readv():
             log_prob = multivariate_normal(y, m, L)
             return tf.reduce_sum(log_prob)
 
-        def predict_f(
-            self, xnew: InputData,full_cov: bool = False, full_output_cov: bool = False
-        ):
-
+        def predict_f(self,
+                      predict_at: tf.Tensor,
+                      full_cov: bool = False,
+                      full_output_cov: bool = False):
             r"""
             This method computes predictions at X \in R^{N \x D} input points
-
             .. math::
                 p(F* | Y)
-
             where F* are points on the GP at new data points, Y are noisy observations at training data points.
             """
             x_data, y_data = self.data
             err = y_data - self.mean_function(x_data)
 
             kmm = self.kernel(x_data)
-            knn = self.kernel(xnew, full_cov=full_cov)
-            kmn = self.kernel(x_data, xnew)
+            knn = self.kernel(predict_at, full=full_cov)
+            kmn = self.kernel(x_data, predict_at)
 
             num_data = x_data.shape[0]
 
-            s = tf.linalg.diag(tf.convert_to_tensor(self.likelihood.variance))  #changed from normal GPR
+            s = tf.linalg.diag(tf.convert_to_tensor(
+                self.likelihood.variance))  #changed from normal GPR
+
+            k_diag = tf.linalg.diag_part(kmm)
+            s_diag = tf.convert_to_tensor(self.likelihood.variance)
+            jitter = tf.cast(tf.fill([num_data], default_jitter()),
+                             'float64')  # stabilize K matrix w/jitter
+            ks = tf.linalg.set_diag(kmm, k_diag + s_diag + jitter)
+            L = tf.linalg.cholesky(ks)
 
             conditional = gpf.conditionals.base_conditional
             f_mean_zero, f_var = conditional(
                 kmn, kmm + s, knn, err, full_cov=full_cov,
                 white=False)  # [N, P], [N, P] or [P, N, N]
 
-            f_mean = f_mean_zero + self.mean_function(xnew)
+            f_mean = f_mean_zero + self.mean_function(predict_at)
             return f_mean, f_var
 
 
@@ -281,7 +306,7 @@ def readv():
     def bounded_parameter(low, high, param):
         """Make parameter tfp Parameter with optimization bounds."""
 
-        sigmoid = tfb.Sigmoid(low=tf.cast(low, tf.float64), 
+        sigmoid = tfb.Sigmoid(low=tf.cast(low, tf.float64),
                               high=tf.cast(high, tf.float64),
                              name='sigmoid')
         parameter = gpf.Parameter(param, transform=sigmoid, dtype=tf.float64)
@@ -338,27 +363,27 @@ def readv():
     #define kernels  with bounds
     k1 = HaversineKernel_Matern32(active_dims=[0, 1])
     k1.lengthscales = bounded_parameter(100, 60000, 300)  #hemispheric space
-    # k1.variance = bounded_parameter(0.1, 100, 2)
+    k1.variance = bounded_parameter(0.1, 100, 2)
 
     k2 = HaversineKernel_Matern32(active_dims=[0, 1])
     k2.lengthscales = bounded_parameter(1, 6000, 10)  #GIA space
-    # k2.variance = bounded_parameter(0.1, 100, 2)
+    k2.variance = bounded_parameter(0.1, 100, 2)
 
     k3 = gpf.kernels.Matern32(active_dims=[2])  #GIA time
     k3.lengthscales = bounded_parameter(0.1, 20000, 1000)
-    # k3.variance = bounded_parameter(0.1, 100, 1)
+    k3.variance = bounded_parameter(0.1, 100, 1)
 
-    k4 = gpf.kernels.Matern32(active_dims=[2], lengthscale = 1000)  #shorter time
+    k4 = gpf.kernels.Matern32(active_dims=[2])  #shorter time
     k4.lengthscales = bounded_parameter(1, 6000, 100)
-    # k4.variance = bounded_parameter(0.1, 100, 1)
+    k4.variance = bounded_parameter(0.1, 100, 1)
 
     k5 = gpf.kernels.White(active_dims=[2])
-    # k5.variance = bounded_parameter(0.01, 100, 1)
+    k5.variance = bounded_parameter(0.01, 100, 1)
 
-    kernel = (k1 * k3)  + k5 + (k4 * k2)
+    kernel = (k1 * k3)  + k5 # + (k4 * k2)
 
     #build & train model
-    m = GPR_diag((X, RSL), kernel=kernel, likelihood=likelihood)
+    m = GPR_new((X, RSL), kernel=kernel, noise_variance=noise_variance)
     print('model built, time=', time.time() - start)
 
     @tf.function(autograph=False)
@@ -388,15 +413,15 @@ def readv():
     print('time elapsed = ', time.time() - start)
 
     print('negative log marginal likelihood =',
-          m.neg_log_marginal_likelihood().numpy())
+          m.log_marginal_likelihood().numpy())
 
 #     loglike = []
 #     loglike.append(m.neg_log_marginal_likelihood().numpy())
-    loglike = m.neg_log_marginal_likelihood().numpy()
+    loglike = m.log_marginal_likelihood().numpy()
 
 
-    ##################	  INTERPOLATE MODELS 	#######################
-    ##################  --------------------	 ######################
+    ##################    INTERPOLATE MODELS    #######################
+    ##################  --------------------     ######################
 
     # turn GPR output into xarray dataarray
     da_zp = xr.DataArray(Zp, coords=[lon, lat, ages],
@@ -417,9 +442,9 @@ def readv():
     return ages, da_zp, ds_giapriorinterpstd, ds_giapriorinterp, ds_priorplusgpr, da_varp, loglike
 
     ages, da_zp, ds_giapriorinterpstd, ds_giapriorinterp, ds_priorplusgpr, da_varp, loglike = run_gpr()
-    
-    ##################	  	 SAVE NETCDFS 	 	#######################
-    ##################  --------------------	 ######################
+
+    ##################           SAVE NETCDFS           #######################
+    ##################  --------------------     ######################
 
     path_gen = f'output/{place}_{ice_model}{ages[0]}_{ages[-1]}'
     da_zp.to_netcdf(path_gen + '_dazp')
@@ -439,3 +464,8 @@ def readv():
 
 if __name__ == '__main__':
     readv()
+
+
+
+
+

@@ -26,29 +26,36 @@ from gpflow.models.model import InputData, RegressionData, MeanAndVariance, GPMo
 from gpflow.base import Parameter 
 from gpflow.models.training_mixins import InternalDataTrainingLossMixin
 from gpflow.config import default_jitter, default_float
+from gpflow.ci_utils import ci_niter, ci_range
+
 
 from typing import Optional, Tuple
 
 from matplotlib import colors, cm
 
+from gpflow.inducing_variables import InducingPoints
 
 
-def load_nordata_fromsheet(sheet):
+def load_nordata_fromsheet(sheet, fromsheet=True):
     
     """Connect to google sheet & load norwegian RSL data."""
     
+    if fromsheet == True:
+        #connect to service account
+        scope = ['https://spreadsheets.google.com/feeds'] 
+        credentials = ServiceAccountCredentials.from_json_keyfile_name('../fentides/careful-granite-273616-38728a8743ba.json', scope) 
+        gc = gspread.authorize(credentials)
+
+        #access data
+        spreadsheet_key = '10glCyv79FkDVfIKDBzfalS6vnzOosR8xNfRbXybK7BY'
+        book = gc.open_by_key(spreadsheet_key)
+        worksheet = book.worksheet(sheet)
+        table = worksheet.get_all_values()
     
-    #connect to service account
-    scope = ['https://spreadsheets.google.com/feeds'] 
-    credentials = ServiceAccountCredentials.from_json_keyfile_name('../fentides/careful-granite-273616-38728a8743ba.json', scope) 
-    gc = gspread.authorize(credentials)
-
-    #access data
-    spreadsheet_key = '10glCyv79FkDVfIKDBzfalS6vnzOosR8xNfRbXybK7BY'
-    book = gc.open_by_key(spreadsheet_key)
-    worksheet = book.worksheet(sheet)
-    table = worksheet.get_all_values()
-
+    else:
+        path = '../data/holocene_fennoscandian_data_05132020.csv'
+        table = pf.read_csv(path)
+    
     ##Convert table data into a dataframe
     df = pd.DataFrame(table[2:], columns=table[2]).drop([0, 1, 2]).reset_index()
     df = df[['Column heading',
@@ -84,7 +91,7 @@ def make_mod(ice_model, lith, ages, extent, zeros=False):
         
     """combine model runs from local directory into xarray dataset."""
     
-    path = f'data/{ice_model}/output_{ice_model}{lith}'
+    path = f'../data/{ice_model}/output_{ice_model}{lith}'
     files = f'{path}*.nc'
     basefiles = glob.glob(files)
     modelrun = [key.split('output_', 1)[1][:-3].replace('.', '_') for key in basefiles]
@@ -184,8 +191,6 @@ def import_rsls(path, df_nor, tmin, tmax, extent):
 def xarray_template(filename, ages, extent):
     
     """make template for xarray interpolation"""
-    
-    filename = 'data/WAISreadvance_VM5_6ka_1step.mat'
 
     template = io.loadmat(filename, squeeze_me=True)
 
@@ -246,8 +251,6 @@ def bounded_parameter(low, high, param):
                          name='sigmoid')
     parameter = gpf.Parameter(param, transform=sigmoid, dtype=tf.float64)
     return parameter
-
-
 
 
 class HaversineKernel_Matern32(gpf.kernels.Matern32):
@@ -434,3 +437,215 @@ def gpr_predict_f(lat, lon, xyt, nout, ds_giamean, m, ages, df_place):
                      dims=['lon', 'lat','age']).transpose('age', 'lat', 'lon')
     
     return y_pred, da_zp, da_varp
+
+
+class GPR_new(GPModel, InternalDataTrainingLossMixin):
+    r"""
+    Gaussian Process Regression.
+    This is a vanilla implementation of GP regression with a Gaussian
+    likelihood.  Multiple columns of Y are treated independently.
+    The log likelihood of this model is sometimes referred to as the 'log
+    marginal likelihood', and is given by
+    .. math::
+       \log p(\mathbf y \,|\, \mathbf f) =
+            \mathcal N(\mathbf{y} \,|\, 0, \mathbf{K} + \sigma_n \mathbf{I})
+    """
+
+    def __init__(
+        self,
+        data: RegressionData,
+        kernel: Kernel,
+        mean_function: Optional[MeanFunction] = None,
+        noise_variance: list = [],
+    ):
+        
+        likelihood = gpflow.likelihoods.Gaussian(noise_variance)
+        _, Y_data = data
+        super().__init__(kernel, likelihood, mean_function, num_latent_gps=Y_data.shape[-1])
+        self.data = data
+
+    def maximum_log_likelihood_objective(self) -> tf.Tensor:
+        return self.log_marginal_likelihood()
+
+    def log_marginal_likelihood(self) -> tf.Tensor:
+        r"""
+        Computes the log marginal likelihood.
+        .. math::
+            \log p(Y | \theta).
+        """
+        X, Y = self.data
+        K = self.kernel(X)
+        num_data = X.shape[0]
+        k_diag = tf.linalg.diag_part(K)
+        s_diag = tf.convert_to_tensor(self.likelihood.variance)
+        
+        ks = tf.linalg.set_diag(K, k_diag + s_diag)
+        L = tf.linalg.cholesky(ks)
+        m = self.mean_function(X)
+
+        # [R,] log-likelihoods for each independent dimension of Y
+        log_prob = multivariate_normal(Y, m, L)
+        return tf.reduce_sum(log_prob)
+
+    def predict_f(
+        self, Xnew: InputData, full_cov: bool = False, full_output_cov: bool = False
+    ) -> MeanAndVariance:
+        r"""
+        This method computes predictions at X \in R^{N \x D} input points
+        .. math::
+            p(F* | Y)
+        where F* are points on the GP at new data points, Y are noisy observations at training data points.
+        """
+        X_data, Y_data = self.data
+#         Xnew_mu = X_data  # [N, D], hypothetically
+#         Xnew_var = tf.linalg.diag(X_err) # [N, n, n], hypothetically
+#         inducing_variable = InducingPoints(Xnew) # [M, D], hypothetically 
+#         q_mu = Xnew
+#         q_sqrt = tf.linalg.cholesky(self.kernel(Xnew))
+        
+        err = Y_data - self.mean_function(X_data)
+
+        kmm = self.kernel(X_data)
+        knn = self.kernel(Xnew, full_cov=full_cov)
+        kmn = self.kernel(X_data, Xnew)
+
+        num_data = X_data.shape[0]
+
+        s = tf.linalg.diag(tf.convert_to_tensor(self.likelihood.variance))
+        
+        conditional = gpflow.conditionals.base_conditional
+        f_mean_zero, f_var = conditional(
+            kmn, kmm + s, knn, err, full_cov=full_cov, white=False)  # [N, P], [N, P] or [P, N, N]
+        f_mean = f_mean_zero + self.mean_function(Xnew)
+        return f_mean, f_var
+    
+    
+    
+    
+def run_gpr(ds_giamean, ages, k1len, k2len, k3len, k4len, df_place):
+            
+            
+    print(k1len, k2len, k3len, k4len)
+    # Input space, rsl normalized to zero mean, unit variance
+    X = np.stack((df_place.lon, df_place.lat, df_place.age), 1)
+
+    RSL = normalize(df_place.rsl_realresid)
+    
+    #define kernels  with bounds
+    k1 = HaversineKernel_Matern32(active_dims=[0, 1], lengthscales=1)
+    k1.lengthscales = bounded_parameter(100, 10000, k1len)  #hemispheric space
+    # k1.lengthscales = bounded_parameter(1, 100, 3)  #hemispheric space
+    k1.variance = bounded_parameter(0.02, 100, 2)
+
+    k2 = gpf.kernels.Matern32(active_dims=[2], lengthscales=1)  #GIA time
+    k2.lengthscales = bounded_parameter(1, 100000, k2len)
+    k2.variance = bounded_parameter(0.02, 100, 1)
+
+    k3 = HaversineKernel_Matern32(active_dims=[0, 1], lengthscales=1)
+    k3.lengthscales = bounded_parameter(1, 10000, k3len)  #GIA space
+    k3.variance = bounded_parameter(0.02, 100, 2)
+
+    k4 = gpf.kernels.Matern32(active_dims=[2], lengthscales=1)  #shorter time
+    k4.lengthscales = bounded_parameter(1, 10000, k4len)
+    k4.variance = bounded_parameter(0.02, 100, 1)
+
+    k5 = gpf.kernels.White(active_dims=[2])
+    k5.variance = bounded_parameter(0.01, 100, 1)
+
+    kernel = (k1 * k2) + (k3 * k4) + k5 
+
+    ##################	  BUILD AND TRAIN MODELS 	#######################
+    noise_variance = (df_place.rsl_er.ravel()/2)**2 + df_place.rsl_giaprior_std.ravel()**2  
+
+    m = GPR_new((X, RSL), kernel=kernel, noise_variance=noise_variance) 
+    
+    #Sandwich age of each lat/lon to enable gradient calculation
+    lonlat = df_place[['lon', 'lat']]
+    agetile = np.stack([df_place.age - 10, df_place.age, df_place.age + 10], axis=-1).flatten()
+    xyt_it = np.column_stack([lonlat.loc[lonlat.index.repeat(3)], agetile])
+
+    #hardcode indices for speed (softcoded alternative commented out)
+    indices = np.arange(1, len(df_place)*3, 3)
+    # indices = np.where(np.in1d(df_place.age, agetile))[0]
+    
+    iterations = ci_niter(1000)
+    learning_rate = 0.05
+    logging_freq = 100
+    opt = tf.optimizers.Adam(learning_rate)
+
+    #first optimize without age errs to get slope
+    tf.print('___First optimization___')
+    likelihood = -10000
+    for i in range(iterations):
+        opt.minimize(m.training_loss, var_list=m.trainable_variables)
+
+        likelihood_new = m.log_marginal_likelihood()
+        if i % logging_freq == 0:
+            tf.print(f"iteration {i + 1} likelihood {m.log_marginal_likelihood():.04f}")
+#         if likelihood_new - likelihood < 0.1:
+#             print(likelihood_new - likelihood)
+#             break
+        likelihood = likelihood_new
+
+    # Calculate posterior at training points + adjacent age points
+    mean, _ = m.predict_f(xyt_it)
+
+    # make diagonal matrix of age slope at training points
+    Xgrad = np.diag(np.gradient(mean.numpy(), axis=0)[indices][:,0])
+
+    # multipy age errors by gradient 
+    Xnigp = np.diag(Xgrad @ np.diag(df_place.age_er**2) @ Xgrad.T)    
+    
+    m = GPR_new((X, RSL), kernel=kernel, noise_variance=noise_variance + Xnigp)
+
+    #reoptimize
+    tf.print('___Second optimization___')
+    opt = tf.optimizers.Adam(learning_rate)
+    
+    for i in range(iterations):
+        opt.minimize(m.training_loss, var_list=m.trainable_variables)
+        
+        likelihood_new = m.log_marginal_likelihood()
+        if i % logging_freq == 0:
+            tf.print(f"iteration {i + 1} likelihood {m.log_marginal_likelihood():.04f}")
+#         if i > 1:
+#             if likelihood_new - likelihood < 0.1:
+#                 print(likelihood_new - likelihood)
+#                 break
+        likelihood = likelihood_new
+            
+    ##################	  INTERPOLATE MODELS 	#######################
+    ##################  --------------------	 ######################
+    # output space
+    
+    nout = 40
+    lat, lon, xyt = makexyt(ds_giamean, nout, ages)
+    mean, da_zp, da_varp = gpr_predict_f(lat, lon, xyt, nout, ds_giamean, m, ages, df_place)
+
+    #interpolate all models onto GPR grid
+    ds_giapriorinterp, ds_giapriorinterpstd  = interp_likegpr(ds_giamean, ds_giastd, da_zp)
+
+    # add total prior RSL back into GPR
+    ds_priorplusgpr = da_zp + ds_giapriorinterp
+    ds_varp = da_varp.to_dataset(name='rsl')
+
+    #Calculate data-model misfits & GPR vals at RSL data locations
+    df_place['gpr_posterior'] = df_place.apply(lambda row: ds_select(ds_priorplusgpr, row), axis=1)
+    df_place['gprpost_std'] = df_place.apply(lambda row: ds_select(ds_varp, row), axis=1)
+    df_place['gpr_diff'] = df_place.apply(lambda row: row.rsl - row.gpr_posterior, axis=1)
+    df_place['diffdiv'] = df_place.gpr_diff / df_place.rsl_er
+    
+    k1_l = m.kernel.kernels[0].kernels[0].lengthscales.numpy()
+    k2_l = m.kernel.kernels[0].kernels[1].lengthscales.numpy()
+    k3_l = m.kernel.kernels[1].kernels[0].lengthscales.numpy()
+    k4_l = m.kernel.kernels[1].kernels[1].lengthscales.numpy()
+    
+    return mean, ds_giapriorinterp, da_zp, ds_priorplusgpr, ds_varp, m, df_place, k1_l, k2_l, k3_l, k4_l
+
+    def interp_ds(ds):
+        return ds.interp(age=ds_giamean.age, lat=ds_giamean.lat, lon=ds_giamean.lon)
+
+    def slice_dataset(ds):
+        return ds.rsl.sel(lat=site[1].lat.unique() ,
+                      lon=site[1].lon.unique(),
+                      method='nearest').sel(age=slice(11500, 0))
