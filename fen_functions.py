@@ -10,10 +10,10 @@ from itertools import product
 import tensorflow as tf
 from tensorflow_probability import bijectors as tfb
 
-import gspread
-from oauth2client.service_account import ServiceAccountCredentials
-from pandas.io.json import json_normalize
-from df2gspread import df2gspread as d2g
+# import gspread
+# from oauth2client.service_account import ServiceAccountCredentials
+# from pandas.io.json import json_normalize
+# from df2gspread import df2gspread as d2g
 
 
 import gpflow

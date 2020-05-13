@@ -17,7 +17,7 @@ do
 fileName="execute_${tmax}_${tmin}_${place}_fenavg"
 fileName_run="run_${tmax}_${tmin}_${place}_fenavg.sh"
 fileName_out="out_$(tmax)_${tmin}_${place}_fenavg.out"
-run_name="${tmax}_${tmin}_${place})_modavg";
+run_name="${tmax}_${tmin}_${place}_modavg";
 
 # go to run folder
 
