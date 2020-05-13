@@ -119,157 +119,26 @@ def readv():
 
     start = time.time()
     
-    mean, ds_giapriorinterp, da_zp, ds_priorplusgpr, ds_varp, m, df_place, k1_l, k2_l, k3_l, k4_l = run_gpr(ds_giamean, ages, k1, k2, k3, k4, df_place)
+    mean, ds_giapriorinterp, da_zp, ds_priorplusgpr, ds_varp, m, df_place, k1_l, k2_l, k3_l, k4_l = run_gpr(ds_giamean, ds_giastd, ages, k1, k2, k3, k4, df_place)
     print(f'time = {time.time()-start}')
 
     print_summary(m, fmt='notebook')
+    print(k1_l, k2_l, k2_l, type(k4_l))
+
     
-    ##################	  Plot 3D maps 	         #######################
-    ##################  --------------------	 ######################
-    
-    for i, age in enumerate(ages):
-        fig, ax = plt.subplots(1, 3, figsize=(12, 12), subplot_kw=dict(projection=ccrs.LambertConformal(central_longitude=-10)))
-        ax = ax.flatten()
+    path_gen = f'output/{place}_{ice_model}{ages[0]}_{ages[-1]}'
+    da_zp.to_netcdf(path_gen + '_dazp')
+    ds_giapriorinterp.to_netcdf(path_gen + '_giaprior')
+    ds_priorplusgpr.to_netcdf(path_gen + '_posterior')
+    ds_varp.to_netcdf(path_gen + '_gpvariance')
 
-        ax[0].coastlines(resolution='50m')
-        ax[0].set_extent(extent)
+#     #store log likelihood in dataframe
+#     df_out = pd.DataFrame({'modelrun': 'average_likelihood',
+#                      'log_marginal_likelihood': loglikelist})
 
-        pc1 = ds_giapriorinterp.rsl.sel(age=age, 
-                                        method='nearest').transpose().plot(ax=ax[0], 
-                                                                           cmap='coolwarm', 
-                          transform=ccrs.PlateCarree(),
-                         add_colorbar=False,
-                          extend='both',
-                                                                          vmin=ds_giapriorinterp.rsl.sel(age=age,
-                                                                                                         method='nearest').min(),
-                                                                          vmax=ds_giapriorinterp.rsl.sel(age=age,
-                                                                                                         method='nearest').max())
-        cbar = fig.colorbar(pc1,ax=ax[0],shrink=shrink,label='ice thickness (m)', extend='both')
-        ax[0].set_title(f'GIA model of RSL @ {age} yrs')
+#     writepath = f'output/{path_gen}_loglikelihood'
+#     df_out.to_csv(writepath, index=False)
 
-
-        ax[1].coastlines(resolution='50m')
-        ax[1].set_extent(extent)
-
-        pc1 = da_zp[i,:,:].plot(ax=ax[1], cmap='coolwarm', 
-                          transform=ccrs.PlateCarree(),
-                         add_colorbar=False,
-                          extend='both', 
-                               vmin=-15,
-                               vmax=10)
-        cbar = fig.colorbar(pc1,ax=ax[1],shrink=shrink,label='ice thickness (m)', extend='both')
-        ax[1].set_title(f'GPR-learned difference b/w \n GIA prior & data, @ {age} yrs')
-
-
-        pc2 = ds_priorplusgpr.rsl[i,:,:].plot(ax=ax[2], cmap='coolwarm', 
-                                        transform=ccrs.PlateCarree(),
-                                       add_colorbar=False,
-                          extend='both',
-                                             vmin=ds_giapriorinterp.rsl.sel(age=age,method='nearest').min(),
-                                            vmax=ds_giapriorinterp.rsl.sel(age=age,method='nearest').max())
-        ax[2].set_title(f'Posterior RSL prediction @ {age} yrs')
-
-        cbar = fig.colorbar(pc2,ax=ax[2],shrink=shrink,label='ice thickness (m)', extend='both')
-        ax[2].coastlines(resolution='50m')
-        ax[2].set_extent(extent)
-
-        if i >= 6:
-            break
-
-    number=11
-
-    df_nufsamps = locs_with_enoughsamples(df_place, place, number)
-    nufsamp = df_nufsamps.locnum.unique()
-
-
-    ##################	  Plot timeseries 	     ######################
-    ##################  --------------------	 ######################
-
-    fig, ax = plt.subplots(1,len(nufsamp), figsize=(26, 6), subplot_kw=dict(projection=proj))
-    ax = ax.ravel()
-
-    da_zeros = xr.zeros_like(ds_giamean.rsl[:,:,0])
-
-    for i, site in enumerate(df_nufsamps.groupby('locnum')):
-        ax[i].set_extent(extent)
-        ax[i].coastlines(color='k')
-        ax[i].plot(site[1].lon.unique(),
-                   site[1].lat.unique(),
-                   c=colormark[0],
-                   ms=7,
-                   marker='o',
-                   transform=proj)
-        ax[i].plot(site[1].lon.unique(),
-                   site[1].lat.unique(),
-                   c=colormark[0],
-                   ms=25,
-                   marker='o',
-                   transform=proj,
-                   mfc="None",
-                   mec='red',
-                   mew=4)
-        da_zeros.plot(ax=ax[i], cmap='Greys', add_colorbar=False)
-    #     ax[i].set_title(site[0], fontsize=fontsize)
-        ax[i].set_title('')
-    #     if i > 6:
-    #         break
-
-
-
-    proj = ccrs.PlateCarree()
-
-    colormark = ['dodgerblue', 'chocolate', 'darkred', 'crimson', 'olivedrab']
-    cmaps = cmap_codes('viridis', len(df_nufsamps))
-
-    num = 6
-    fig, ax = plt.subplots(1, len(nufsamp), figsize=(24, 6))
-    ax = ax.ravel()
-
-    for i, site in enumerate(df_nufsamps.groupby('locnum')):
-
-        plt.suptitle(f"Prior GIA RSL predictions vs. Posterior GPR regressions", fontsize=20)
-
-    #     #slice data for each site
-        prior_it = slice_dataset(ds_giamean) # [:,:,:-4]
-        var_itprior = slice_dataset(ds_giastd)
-        top_prior = prior_it + var_itprior * 2
-        bottom_prior = prior_it - var_itprior * 2
-
-
-        post_it = slice_dataset(ds_priorplusgpr)
-        var_it = slice_dataset(np.sqrt(ds_varp))
-        top = post_it + var_it * 2
-        bottom = post_it - var_it * 2
-
-        site_err = 2 * (site[1].rsl_er)
-        age_err = 2 * site[1].age_er
-
-        prior_it.plot(ax=ax[i], c=colormark[0], alpha=0.4, label='ICE6G GIA prior')
-        ax[i].fill_between(prior_it.age, bottom_prior.squeeze(), top_prior.squeeze(), color=colormark[0], alpha=0.1) 
-
-
-        post_it.plot(ax=ax[i], lw=2, c=colormark[1], alpha=1, label='ICE6G GPR posterior')
-        ax[i].fill_between(post_it.age, bottom.squeeze(), top.squeeze(), color=colormark[3], alpha=0.4) 
-
-
-        ax[i].scatter(site[1].age, site[1].rsl, c=colormark[2], s=4, lw=2,label='RSL data')
-        ax[i].errorbar(site[1].age, site[1].rsl, yerr=site_err, xerr=age_err, c=colormark[2], fmt='none', capsize=-.1,lw=1.5)
-
-        ax[i].set_xlim(0, 11500)
-    #     ax[i].set_ylim(-15,10)
-        ax[i].set_title('')
-    #     if i > num:
-    #         break
-
-    lines = [ Line2D([0], [0], color=colormark[0], linewidth=3, linestyle='-'),
-             Line2D([0], [0], color=colormark[1], linewidth=3, linestyle='-'),
-             Circle([0], 0.1, color=colormark[2], linewidth=3, ec="none")]
-
-    labels = ['ICE6G GIA prior', 'ICE6G GPR posterior', 'RSL data']
-    ax[i].legend(lines, labels, loc='lower left')
-
-
-    plt.show()
             
 
 if __name__ == '__main__':

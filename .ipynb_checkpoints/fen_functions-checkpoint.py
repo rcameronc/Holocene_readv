@@ -522,7 +522,7 @@ class GPR_new(GPModel, InternalDataTrainingLossMixin):
     
     
     
-def run_gpr(ds_giamean, ages, k1len, k2len, k3len, k4len, df_place):
+def run_gpr(ds_giamean, ds_giastd, ages, k1len, k2len, k3len, k4len, df_place):
             
             
     print(k1len, k2len, k3len, k4len)
