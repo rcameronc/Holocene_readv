@@ -51,13 +51,15 @@ def load_nordata_fromsheet(sheet, fromsheet=False):
         book = gc.open_by_key(spreadsheet_key)
         worksheet = book.worksheet(sheet)
         table = worksheet.get_all_values()
-    
+        df = pd.DataFrame(table[2:], columns=table[2]).drop([0, 1, 2]).reset_index()
+
     else:
         path = '../data/holocene_fennoscandian_data_05132020.csv'
-        table = pf.read_csv(path)
+        table = pd.read_csv(path)
+        df = table[4:].rename(columns=table.iloc[1]).reset_index()
+
     
     ##Convert table data into a dataframe
-    df = pd.DataFrame(table[2:], columns=table[2]).drop([0, 1, 2]).reset_index()
     df = df[['Column heading',
              'Latitude', 
              'Longitude', 
