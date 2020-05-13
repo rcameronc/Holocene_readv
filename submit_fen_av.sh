@@ -16,7 +16,7 @@ do
 # put together file name
 fileName="execute_${tmax}_${tmin}_${place}_fenavg"
 fileName_run="run_${tmax}_${tmin}_${place}_fenavg.sh"
-fileName_out="out_$(tmax)_${tmin}_${place}_fenavg.out"
+fileName_out="out_${tmax}_${tmin}_${place}_fenavg.out"
 run_name="${tmax}_${tmin}_${place}_modavg";
 
 # go to run folder
@@ -63,7 +63,7 @@ cd execute_fen
     echo " " >&3
     echo "module load singularity" >&3
     echo "module load cuda80/toolkit" >&3
-    echo "singularity shell /rigel/jalab/users/rcc2167/gpflow-tensorflow-rcc2167.simg"
+    echo "singularity shell -nv /rigel/jalab/users/rcc2167/gpflow-tensorflow-rcc2167.simg"
     echo "source activate gpflow6_0" >&3
     echo "cd ../run_fen/" >&3
     echo "bash ${fileName_run}" >&3
