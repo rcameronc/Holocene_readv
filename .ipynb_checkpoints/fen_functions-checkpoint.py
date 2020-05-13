@@ -10,10 +10,10 @@ from itertools import product
 import tensorflow as tf
 from tensorflow_probability import bijectors as tfb
 
-import gspread
-from oauth2client.service_account import ServiceAccountCredentials
-from pandas.io.json import json_normalize
-from df2gspread import df2gspread as d2g
+# import gspread
+# from oauth2client.service_account import ServiceAccountCredentials
+# from pandas.io.json import json_normalize
+# from df2gspread import df2gspread as d2g
 
 
 import gpflow
@@ -36,7 +36,7 @@ from matplotlib import colors, cm
 from gpflow.inducing_variables import InducingPoints
 
 
-def load_nordata_fromsheet(sheet, fromsheet=True):
+def load_nordata_fromsheet(sheet, fromsheet=False):
     
     """Connect to google sheet & load norwegian RSL data."""
     
@@ -568,7 +568,7 @@ def run_gpr(ds_giamean, ds_giastd, ages, k1len, k2len, k3len, k4len, df_place):
     indices = np.arange(1, len(df_place)*3, 3)
     # indices = np.where(np.in1d(df_place.age, agetile))[0]
     
-    iterations = ci_niter(1000)
+    iterations = ci_niter(500)
     learning_rate = 0.05
     logging_freq = 100
     opt = tf.optimizers.Adam(learning_rate)

@@ -36,7 +36,7 @@ from matplotlib import colors, cm
 from gpflow.inducing_variables import InducingPoints
 
 
-def load_nordata_fromsheet(sheet, fromsheet=True):
+def load_nordata_fromsheet(sheet, fromsheet=False):
     
     """Connect to google sheet & load norwegian RSL data."""
     
