@@ -53,7 +53,7 @@ def readv():
     tmax = int(args.tmax)
     tmin = int(args.tmin)
     place = args.place
-    zeros = args.zeros
+    zeros = "yes" # args.zeros
     k1 = int(args.kernels[0])
     k2 = int(args.kernels[1])
     k3 = int(args.kernels[2])
