@@ -570,7 +570,7 @@ def run_gpr(ds_giamean, ds_giastd, ages, k1len, k2len, k3len, k4len, df_place):
     indices = np.arange(1, len(df_place)*3, 3)
     # indices = np.where(np.in1d(df_place.age, agetile))[0]
     
-    iterations = ci_niter(500)
+    iterations = ci_niter(5000)
     learning_rate = 0.05
     logging_freq = 100
     opt = tf.optimizers.Adam(learning_rate)

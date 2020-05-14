@@ -82,7 +82,7 @@ def readv():
     print(f'number of datapoints = {df_place.shape}')
 
     # add zeros at present-day.  
-    if zeros == 'Yes':
+    if zeros == 'yes':
         nout = 50
         df_place = add_presday_0s(df_place, nout)
         print('new number of zero points  = {df_place.shape}')
