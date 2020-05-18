@@ -521,13 +521,45 @@ class GPR_new(GPModel, InternalDataTrainingLossMixin):
         f_mean = f_mean_zero + self.mean_function(Xnew)
         return f_mean, f_var
     
+def predict_post_f(nout, ages, ds_giamean, df_place, m):
+
+    # make variables
+    lat = np.linspace(min(ds_giamean.lat), max(ds_giamean.lat), nout)
+    lon = np.linspace(min(ds_giamean.lon), max(ds_giamean.lon), nout)
+    xyt = np.array(list(product(lon, lat, ages)))
+
+    # predict posterior RSL mean & variance
+    #iteration reduces memory pressure of haversine calculation
+    # Couldn't figure out how to make this pythonic 
+    y_preds = []
+    var = []
+    for i in range(len(ages)):
+        y_pred, var_it = m.predict_f(xyt[:nout**2])
+        xyt = xyt[nout**2:]
+        y_preds.append(y_pred)
+        var.append(var_it)
+    y_pred = tf.concat(y_preds, 0)  
+    var = tf.concat(var, 0)
+    
+    #denormalize to return correct values
+    y_pred = denormalize(y_pred, df_place.rsl_realresid)
+    
+    # reshape output vectors
+    Zp = np.array(y_pred).reshape(nout, nout, len(ages))
+    varp = np.array(var).reshape(nout, nout, len(ages))
+    
+    #transform output into xarray dataarrays
+    da_zp = xr.DataArray(Zp, coords=[lon, lat, ages],
+                     dims=['lon', 'lat','age']).transpose('age', 'lat', 'lon')
+    da_varp = xr.DataArray(varp, coords=[lon, lat, ages],
+                     dims=['lon', 'lat','age']).transpose('age', 'lat', 'lon')
+    
+    return da_zp, da_varp   
     
     
-    
-def run_gpr(ds_giamean, ds_giastd, ages, k1len, k2len, k3len, k4len, df_place):
+def run_gpr(nout, iterations, ds_giamean, ds_giastd, ages, k1len, k2len, k3len, k4len, df_place):
             
             
-    print(k1len, k2len, k3len, k4len)
     # Input space, rsl normalized to zero mean, unit variance
     X = np.stack((df_place.lon, df_place.lat, df_place.age), 1)
 
@@ -570,7 +602,7 @@ def run_gpr(ds_giamean, ds_giastd, ages, k1len, k2len, k3len, k4len, df_place):
     indices = np.arange(1, len(df_place)*3, 3)
     # indices = np.where(np.in1d(df_place.age, agetile))[0]
     
-    iterations = ci_niter(5000)
+    iterations = ci_niter(iterations)
     learning_rate = 0.05
     logging_freq = 100
     opt = tf.optimizers.Adam(learning_rate)
@@ -584,9 +616,8 @@ def run_gpr(ds_giamean, ds_giastd, ages, k1len, k2len, k3len, k4len, df_place):
         likelihood_new = m.log_marginal_likelihood()
         if i % logging_freq == 0:
             tf.print(f"iteration {i + 1} likelihood {m.log_marginal_likelihood():.04f}")
-#         if likelihood_new - likelihood < 0.1:
-#             print(likelihood_new - likelihood)
-#             break
+        if abs(likelihood_new - likelihood) < 0.05:
+                break
         likelihood = likelihood_new
 
     # Calculate posterior at training points + adjacent age points
@@ -610,19 +641,14 @@ def run_gpr(ds_giamean, ds_giastd, ages, k1len, k2len, k3len, k4len, df_place):
         likelihood_new = m.log_marginal_likelihood()
         if i % logging_freq == 0:
             tf.print(f"iteration {i + 1} likelihood {m.log_marginal_likelihood():.04f}")
-#         if i > 1:
-#             if likelihood_new - likelihood < 0.1:
-#                 print(likelihood_new - likelihood)
-#                 break
+        if abs(likelihood_new - likelihood) < 0.05:
+                break
         likelihood = likelihood_new
             
     ##################	  INTERPOLATE MODELS 	#######################
     ##################  --------------------	 ######################
     # output space
-    
-    nout = 40
-    lat, lon, xyt = makexyt(ds_giamean, nout, ages)
-    mean, da_zp, da_varp = gpr_predict_f(lat, lon, xyt, nout, ds_giamean, m, ages, df_place)
+    da_zp, da_varp = predict_post_f(nout, ages, ds_giamean, df_place, m)
 
     #interpolate all models onto GPR grid
     ds_giapriorinterp, ds_giapriorinterpstd  = interp_likegpr(ds_giamean, ds_giastd, da_zp)
@@ -642,7 +668,7 @@ def run_gpr(ds_giamean, ds_giastd, ages, k1len, k2len, k3len, k4len, df_place):
     k3_l = m.kernel.kernels[1].kernels[0].lengthscales.numpy()
     k4_l = m.kernel.kernels[1].kernels[1].lengthscales.numpy()
     
-    return mean, ds_giapriorinterp, da_zp, ds_priorplusgpr, ds_varp, m, df_place, k1_l, k2_l, k3_l, k4_l
+    return ds_giapriorinterp, da_zp, ds_priorplusgpr, ds_varp, m, df_place, k1_l, k2_l, k3_l, k4_l
 
     def interp_ds(ds):
         return ds.interp(age=ds_giamean.age, lat=ds_giamean.lat, lon=ds_giamean.lon)

@@ -115,4 +115,4 @@ ice_grids/*
 archive
 output
 readv_output_020920
-.ipynb_checkpoints
+.ipynb_checkpoints/*

@@ -40,8 +40,8 @@ def readv():
     parser.add_argument("--lm", default="3")
     parser.add_argument("--tmax", default=8000)
     parser.add_argument("--tmin", default=7000)
-    parser.add_argument("--place", default="fennoscandia")
-    parser.add_argument("--zeros", default="no")
+    parser.add_argument("--place", default="europe_arctic")
+    parser.add_argument("--nout", default=20)
     parser.add_argument("--kernels", default=[2500, 10000, 100, 6000])
 
     args = parser.parse_args()
@@ -53,7 +53,8 @@ def readv():
     tmax = int(args.tmax)
     tmin = int(args.tmin)
     place = args.place
-    zeros = "yes" # args.zeros
+    nout = args.nout
+    zeros = "yes" 
     k1 = int(args.kernels[0])
     k2 = int(args.kernels[1])
     k3 = int(args.kernels[2])
@@ -69,6 +70,7 @@ def readv():
     locs = {'europe': [-20, 15, 35, 70],
             'fennoscandia': [-15, 50, 45, 75],
             'norway': [0, 50, 50, 75],
+            'europe_arctic': [-15, 88, 45, 85]
            }
     extent = locs[place]
 
@@ -83,9 +85,9 @@ def readv():
 
     # add zeros at present-day.  
     if zeros == 'yes':
-        nout = 50
-        df_place = add_presday_0s(df_place, nout)
-        print('new number of zero points  = {df_place.shape}')
+        NUM = 50
+        df_place = add_presday_0s(df_place, NUM)
+        print(f'new number of data points with zeros  = {df_place.shape}')
 
     ####################  Make xarray template  #######################
 
@@ -119,7 +121,7 @@ def readv():
 
     start = time.time()
     
-    mean, ds_giapriorinterp, da_zp, ds_priorplusgpr, ds_varp, m, df_place, k1_l, k2_l, k3_l, k4_l = run_gpr(ds_giamean, ds_giastd, ages, k1, k2, k3, k4, df_place)
+    ds_giapriorinterp, da_zp, ds_priorplusgpr, ds_varp, m, df_place, k1_l, k2_l, k3_l, k4_l = run_gpr(nout, iterations, ds_giamean, ds_giastd, ages, k1, k2, k3, k4, df_place)
     print(f'time = {time.time()-start}')
 
     print_summary(m, fmt='notebook')
