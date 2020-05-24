@@ -1,5 +1,5 @@
-# Holocene_readv
-Holocene readvance project
+# fen_rslproj
+Fennoscandian RSL modeling project
 
 ### Install Instructions
 `TODO: Generate Data and put it in /data`
